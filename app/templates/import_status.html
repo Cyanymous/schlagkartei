@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Import-Status – Schlagkartei{% endblock %}
+{% block content %}
+<h1>Import-Status</h1>
+
+<form method="post" action="/import">
+  <button type="submit">Jetzt importieren</button>
+</form>
+
+<table>
+  <thead>
+    <tr><th>Datei</th><th>Importiert am</th><th>Datensätze</th><th>Status</th><th>Fehler</th></tr>
+  </thead>
+  <tbody>
+    {% for d in dateien %}
+    <tr>
+      <td>{{ d.dateiname }}</td>
+      <td>{{ d.importiert_am }}</td>
+      <td>{{ d.anzahl_datensaetze }}</td>
+      <td class="status-{{ d.status }}">{{ d.status }}</td>
+      <td>{{ d.fehlermeldung or "" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Noch keine Dateien importiert.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

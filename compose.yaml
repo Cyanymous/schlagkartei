@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./exports:/exports:ro,z
+      - ./data:/data:z
+    environment:
+      - EXPORT_DIR=/exports
+      - DB_PATH=/data/schlagkartei.db
+      - BETRIEB_ZUORDNUNG=${BETRIEB_ZUORDNUNG:-}

@@ -1,0 +1,37 @@
+# --- Echte Betriebsdaten: niemals ins Repo ---
+# (führender Slash = nur die Ordner im Repo-Wurzelverzeichnis,
+#  tests/fixtures/ bleibt dadurch versioniert)
+/exports/
+/data/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# --- Umgebung / Zugangsdaten ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# --- Claude Code: nur persönliche/lokale Dateien ---
+CLAUDE.local.md
+.claude/settings.local.json
+
+# --- Editor / Betriebssystem ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
