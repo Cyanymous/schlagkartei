@@ -21,7 +21,7 @@
 
 <h2>Notiz</h2>
 <form class="notiz" method="post" action="/anwendung/{{ a.id }}/notiz">
-  <textarea name="text" rows="4">{{ daten.notiz.text if daten.notiz else '' }}</textarea>
+  <textarea name="text" rows="10">{{ daten.notiz.text if daten.notiz else '' }}</textarea>
   <div>
     <button type="submit">Speichern</button>
     {% if daten.notiz %}<span class="hinweis">zuletzt geändert {{ daten.notiz.geaendert_am | ortszeit }}</span>{% endif %}
