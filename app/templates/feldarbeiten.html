@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Feldarbeiten – Schlagkartei{% endblock %}
+{% block content %}
+<h1>Feldarbeiten</h1>
+
+<form method="get" action="/feldarbeiten" class="filter">
+  <label>Jahr
+    <select name="jahr">
+      <option value="">alle</option>
+      {% for j in jahre %}<option {% if filter.jahr == j %}selected{% endif %}>{{ j }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Schlag
+    <select name="schlag">
+      <option value="">alle</option>
+      {% for s in schlaege %}<option value="{{ s.id }}" {% if filter.schlag_id == s.id | string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Art
+    <select name="art">
+      <option value="">alle</option>
+      {% for a in arten %}<option {% if filter.art == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit">Filtern</button>
+  <a href="/feldarbeiten.csv?{{ querystring }}">CSV-Export</a>
+  <a class="knopf-primaer" href="/feldarbeiten/neu{% if filter.schlag_id %}?schlag={{ filter.schlag_id }}{% endif %}">+ Neue Feldarbeit</a>
+</form>
+
+<p class="trefferzahl">{{ feldarbeiten | length }} {{ "Feldarbeit" if feldarbeiten | length == 1 else "Feldarbeiten" }}</p>
+<div class="tabelle">
+<table class="klickbar">
+  <thead><tr><th>Datum</th><th>Art</th><th>Schläge</th><th>Bemerkung</th></tr></thead>
+  <tbody>
+    {% for f in feldarbeiten %}
+    <tr>
+      <td class="nowrap"><a class="zeilenlink" href="/feldarbeiten/{{ f.id }}">{{ f.datum | datum_de }}</a></td>
+      <td><span class="chip chip-arbeit">{{ f.art }}</span></td>
+      <td>{% for s in f.schlaege %}<span class="chip">{{ s.name }}</span>{% endfor %}</td>
+      <td>{{ f.bemerkung or "" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="leer">Keine Feldarbeiten gefunden.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

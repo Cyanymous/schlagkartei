@@ -197,8 +197,8 @@ form.filter label {
 }
 
 form.filter label select,
-form.formzeile label input,
-form.formzeile label select {
+.formzeile label input,
+.formzeile label select {
   text-transform: none;
   letter-spacing: normal;
   font-weight: normal;
@@ -227,7 +227,7 @@ button.knopf-gefahr:hover {
 }
 
 /* Formulare, deren Felder nebeneinander stehen (Beschriftung über dem Feld). */
-form.formzeile {
+.formzeile {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -235,7 +235,7 @@ form.formzeile {
   margin: 0.75rem 0 0;
 }
 
-form.formzeile label {
+.formzeile label {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -246,27 +246,27 @@ form.formzeile label {
   color: var(--muted);
 }
 
-form.formzeile.kompakt label.checkbox {
+.formzeile.kompakt label.checkbox {
   padding-bottom: 0;
   text-transform: none;
   font-size: 0.9rem;
   font-weight: normal;
 }
 
-form.formzeile label.checkbox {
+.formzeile label.checkbox {
   flex-direction: row;
   align-items: center;
   padding-bottom: 0.5rem;
 }
 
-form.formzeile.kompakt {
+.formzeile.kompakt {
   margin: 0;
   gap: 0.5rem;
   align-items: center;
 }
 
-form.formzeile select,
-form.formzeile input {
+.formzeile select,
+.formzeile input {
   min-width: 0;
 }
 
@@ -542,18 +542,98 @@ td.wiederholt {
   border-bottom: none;
 }
 
-.anbau-eintrag form.formzeile {
+.anbau-eintrag .formzeile {
   margin: 0;
   flex: 1 1 30rem;
 }
 
-form.formzeile label.breit {
+.formzeile label.breit {
   flex: 1 1 16rem;
 }
 
 /* Breite Tabellen (Anbauplan) dürfen immer seitlich scrollen. */
 .tabelle-breit {
   overflow-x: auto;
+}
+
+/* Feldarbeiten */
+
+a.knopf-primaer {
+  background: var(--primary);
+  color: var(--primary-contrast) !important;
+  border-color: var(--primary) !important;
+}
+
+a.knopf-primaer:hover {
+  filter: brightness(1.08);
+  background: var(--primary) !important;
+}
+
+form.filter a.knopf-primaer {
+  margin-left: auto;
+}
+
+.karte > .formzeile:first-child {
+  margin-top: 0;
+}
+
+h2.abschnitt-klein {
+  margin: 1.5rem 0 0.5rem;
+}
+
+.schnellauswahl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.schnellauswahl[hidden] {
+  display: none;
+}
+
+fieldset.schlagauswahl {
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.4rem 1rem;
+}
+
+fieldset.schlagauswahl legend {
+  font-weight: 600;
+  color: var(--primary-dark);
+  padding: 0 0.3rem;
+}
+
+fieldset.schlagauswahl label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+fieldset.schlagauswahl label:hover {
+  background: var(--hover);
+}
+
+fieldset.schlagauswahl input {
+  margin-top: 0.25rem;
+}
+
+fieldset.schlagauswahl small {
+  display: block;
+  color: var(--muted);
+}
+
+.chip-arbeit {
+  background: var(--betrieb-1-bg);
+  color: var(--betrieb-1-text);
+  font-weight: 600;
 }
 
 /* Etiketten */

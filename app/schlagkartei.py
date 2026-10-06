@@ -1,6 +1,8 @@
 """SQL für die Schlagkartei (Stufe 2): Schläge, Kulturen, Anbau, Feldarbeiten."""
 
+import json
 import sqlite3
+from datetime import date
 
 ERSTES_JAHR = 2020
 ANBAU_ARTEN = ["Hauptkultur", "Zwischenfrucht", "Untersaat", "Zweitfrucht"]
@@ -309,3 +311,105 @@ def update_anbau(
 def delete_anbau(conn: sqlite3.Connection, anbau_id: int) -> None:
     conn.execute("DELETE FROM anbau WHERE id = ?", (anbau_id,))
     conn.commit()
+
+
+# --- Feldarbeiten -----------------------------------------------------------
+
+# Vorschläge für das Feld „Art“, ergänzt um alles, was schon erfasst wurde.
+ARBEITSARTEN = [
+    "Pflügen", "Grubbern", "Scheiben", "Eggen", "Striegeln", "Hacken", "Walzen",
+    "Säen", "Pflanzen", "Mulchen", "Mähen", "Ernte", "Kalken", "Düngen",
+]
+
+
+def get_arbeitsarten(conn: sqlite3.Connection) -> list[str]:
+    erfasst = [r[0] for r in conn.execute("SELECT DISTINCT art FROM feldarbeiten")]
+    return sorted(set(ARBEITSARTEN) | set(erfasst))
+
+
+def get_feldarbeiten(
+    conn: sqlite3.Connection, jahr: str = "", schlag_id: str = "", art: str = ""
+) -> list[dict]:
+    rows = conn.execute(
+        """SELECT f.*,
+               (SELECT json_group_array(json_object('id', s.id, 'name', s.name))
+                FROM feldarbeit_schlaege fs JOIN schlaege s ON s.id = fs.schlag_id
+                WHERE fs.feldarbeit_id = f.id) AS schlaege
+           FROM feldarbeiten f
+           WHERE (:jahr = '' OR substr(f.datum, 1, 4) = :jahr)
+             AND (:art = '' OR f.art = :art)
+             AND (:schlag = '' OR EXISTS (SELECT 1 FROM feldarbeit_schlaege fs
+                                          WHERE fs.feldarbeit_id = f.id AND fs.schlag_id = :schlag))
+           ORDER BY f.datum DESC, f.id DESC""",
+        {"jahr": jahr, "art": art, "schlag": schlag_id},
+    ).fetchall()
+    ergebnis = []
+    for row in rows:
+        zeile = dict(row)
+        zeile["schlaege"] = sorted(json.loads(zeile["schlaege"]), key=lambda s: s["name"])
+        ergebnis.append(zeile)
+    return ergebnis
+
+
+def get_feldarbeit_jahre(conn: sqlite3.Connection) -> list[str]:
+    return [r[0] for r in conn.execute(
+        "SELECT DISTINCT substr(datum, 1, 4) FROM feldarbeiten ORDER BY 1 DESC"
+    )]
+
+
+def get_feldarbeit(conn: sqlite3.Connection, feldarbeit_id: int) -> tuple[sqlite3.Row | None, set[int]]:
+    feldarbeit = conn.execute("SELECT * FROM feldarbeiten WHERE id = ?", (feldarbeit_id,)).fetchone()
+    schlag_ids = {
+        r[0] for r in conn.execute(
+            "SELECT schlag_id FROM feldarbeit_schlaege WHERE feldarbeit_id = ?", (feldarbeit_id,)
+        )
+    }
+    return feldarbeit, schlag_ids
+
+
+def save_feldarbeit(
+    conn: sqlite3.Connection,
+    feldarbeit_id: int | None,
+    datum: str,
+    art: str,
+    bemerkung: str,
+    schlag_ids: list[int],
+) -> tuple[int | None, str | None]:
+    """Legt eine Feldarbeit an (feldarbeit_id None) oder ändert sie."""
+    try:
+        date.fromisoformat(datum)
+    except ValueError:
+        return None, "Bitte ein gültiges Datum angeben."
+    if not art.strip():
+        return None, "Bitte die Art der Arbeit angeben."
+    if not schlag_ids:
+        return None, "Bitte mindestens einen Schlag auswählen."
+
+    werte = (datum, art.strip(), bemerkung.strip() or None)
+    if feldarbeit_id is None:
+        feldarbeit_id = conn.execute(
+            "INSERT INTO feldarbeiten (datum, art, bemerkung) VALUES (?, ?, ?)", werte
+        ).lastrowid
+    else:
+        conn.execute("UPDATE feldarbeiten SET datum = ?, art = ?, bemerkung = ? WHERE id = ?", (*werte, feldarbeit_id))
+        conn.execute("DELETE FROM feldarbeit_schlaege WHERE feldarbeit_id = ?", (feldarbeit_id,))
+    conn.executemany(
+        "INSERT INTO feldarbeit_schlaege (feldarbeit_id, schlag_id) VALUES (?, ?)",
+        [(feldarbeit_id, s) for s in sorted(set(schlag_ids))],
+    )
+    conn.commit()
+    return feldarbeit_id, None
+
+
+def delete_feldarbeit(conn: sqlite3.Connection, feldarbeit_id: int) -> None:
+    conn.execute("DELETE FROM feldarbeiten WHERE id = ?", (feldarbeit_id,))
+    conn.commit()
+
+
+def hauptkultur_je_schlag(conn: sqlite3.Connection, jahr: int) -> dict[int, str]:
+    """Für die Schlagauswahl: welche Hauptkultur steht im Jahr auf welchem Schlag."""
+    ergebnis: dict[int, str] = {}
+    for e in get_anbau(conn):
+        if e["jahr"] == jahr and e["art"] == "Hauptkultur":
+            ergebnis[e["schlag_id"]] = (ergebnis.get(e["schlag_id"], "") + ", " + e["kultur"]).lstrip(", ")
+    return ergebnis

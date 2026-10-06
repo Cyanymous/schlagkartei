@@ -148,3 +148,34 @@ def test_anbauumfang_nutzt_groesse_des_jeweiligen_jahres(conn):
 
     umfang = {(r["jahr"], r["kultur"]): r["ha"] for r in sk.anbauumfang(conn)}
     assert umfang == {(2024, "Hafer"): 3.0, (2025, "Hafer"): 3.5}
+
+
+# --- Feldarbeiten ---
+
+
+def test_feldarbeit_fuer_mehrere_schlaege(conn):
+    a, _ = sk.create_schlag(conn, "Hof", "Acker A", 2020, "1", 1.0)
+    b, _ = sk.create_schlag(conn, "Hof", "Acker B", 2020, "2", 1.0)
+    c, _ = sk.create_schlag(conn, "Hof", "Acker C", 2020, "3", 1.0)
+    fa_id, fehler = sk.save_feldarbeit(conn, None, "2026-09-08", "Scheiben", "Roggen scheiben", [a, b])
+    assert fehler is None
+    sk.save_feldarbeit(conn, None, "2025-04-01", "Walzen", "", [c])
+
+    alle = sk.get_feldarbeiten(conn)
+    assert [f["art"] for f in alle] == ["Scheiben", "Walzen"]  # neueste zuerst
+    assert [s["name"] for s in alle[0]["schlaege"]] == ["Acker A", "Acker B"]
+
+    assert [f["id"] for f in sk.get_feldarbeiten(conn, schlag_id=str(b))] == [fa_id]
+    assert [f["art"] for f in sk.get_feldarbeiten(conn, jahr="2025")] == ["Walzen"]
+
+    # Ändern ersetzt die Schlagauswahl
+    sk.save_feldarbeit(conn, fa_id, "2026-09-08", "Scheiben", "", [c])
+    assert sk.get_feldarbeit(conn, fa_id)[1] == {c}
+
+
+def test_feldarbeit_pruefungen(conn):
+    a, _ = sk.create_schlag(conn, "Hof", "Acker", 2020, "1", 1.0)
+    assert sk.save_feldarbeit(conn, None, "08.09.2026", "Scheiben", "", [a])[1] is not None
+    assert sk.save_feldarbeit(conn, None, "2026-09-08", " ", "", [a])[1] is not None
+    assert sk.save_feldarbeit(conn, None, "2026-09-08", "Scheiben", "", [])[1] is not None
+    assert conn.execute("SELECT COUNT(*) FROM feldarbeiten").fetchone()[0] == 0

@@ -20,8 +20,9 @@
     </nav>
   </header>
   <main>
-    {% if request.query_params.get("fehler") %}
-    <div class="meldung-fehler">{{ request.query_params.get("fehler") }}</div>
+    {% set meldung = fehler or request.query_params.get("fehler") %}
+    {% if meldung %}
+    <div class="meldung-fehler">{{ meldung }}</div>
     {% endif %}
     {% block content %}{% endblock %}
   </main>

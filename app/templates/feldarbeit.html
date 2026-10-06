@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Feldarbeit – Schlagkartei{% endblock %}
+{% block content %}
+{% set neu = not feldarbeit or not feldarbeit.id %}
+<p><a href="/feldarbeiten">&larr; alle Feldarbeiten</a></p>
+<h1>{{ "Neue Feldarbeit" if neu else "Feldarbeit bearbeiten" }}</h1>
+
+<form class="karte" method="post" action="{{ '/feldarbeiten' if neu else '/feldarbeiten/' ~ feldarbeit.id }}">
+  <div class="formzeile">
+    <label>Datum <input type="date" name="datum" required value="{{ feldarbeit.datum if feldarbeit else heute }}"></label>
+    <label>Art
+      <input name="art" list="arten" required value="{{ feldarbeit.art if feldarbeit else '' }}" placeholder="z. B. Scheiben">
+    </label>
+    <label class="breit">Bemerkung <input name="bemerkung" value="{{ (feldarbeit.bemerkung or '') if feldarbeit else '' }}"></label>
+  </div>
+  <datalist id="arten">{% for a in arten %}<option value="{{ a }}">{% endfor %}</datalist>
+
+  <h2 class="abschnitt-klein">Schläge</h2>
+  {# Schnellauswahl braucht JavaScript; ohne funktioniert das Ankreuzen trotzdem. #}
+  <div class="schnellauswahl" hidden>
+    <button type="button" class="knopf-zweit" data-auswahl="alle">alle</button>
+    <button type="button" class="knopf-zweit" data-auswahl="keine">keine</button>
+    {% for b in schlaege | map(attribute="betrieb") | unique | sort %}
+    <button type="button" class="knopf-zweit" data-auswahl="betrieb" data-wert="{{ b }}">alle {{ b }}</button>
+    {% endfor %}
+    {% for k in kultur_je_schlag.values() | unique | sort %}
+    <button type="button" class="knopf-zweit" data-auswahl="kultur" data-wert="{{ k }}">alle mit {{ k }}</button>
+    {% endfor %}
+  </div>
+  {% for b in schlaege | groupby("betrieb") %}
+  <fieldset class="schlagauswahl">
+    <legend>{{ b.grouper }}</legend>
+    {% for s in b.list %}
+    <label>
+      <input type="checkbox" name="schlag" value="{{ s.id }}" data-kultur="{{ kultur_je_schlag.get(s.id, '') }}" data-betrieb="{{ s.betrieb }}" {% if s.id in ausgewaehlt %}checked{% endif %}>
+      <span>
+        <strong>{{ s.name }}</strong>
+        <small>{{ s.schlagnummer or "" }}{% if kultur_je_schlag.get(s.id) %} · {{ kultur_je_schlag[s.id] }} {{ jahr }}{% endif %}</small>
+      </span>
+    </label>
+    {% endfor %}
+  </fieldset>
+  {% else %}
+  <p class="hinweis">Noch keine Schläge angelegt – zuerst unter <a href="/schlaege">Schläge</a> anlegen.</p>
+  {% endfor %}
+
+  <div class="formzeile">
+    <button type="submit">Speichern</button>
+    <a href="/feldarbeiten">Abbrechen</a>
+  </div>
+</form>
+
+{% if not neu %}
+<form method="post" action="/feldarbeiten/{{ feldarbeit.id }}/loeschen">
+  <button type="submit" class="knopf-gefahr">Feldarbeit löschen</button>
+</form>
+{% endif %}
+
+<script>
+  // Schnellauswahl für viele Schläge auf einmal.
+  const leiste = document.querySelector(".schnellauswahl");
+  leiste.hidden = false;
+  leiste.addEventListener("click", (e) => {
+    const knopf = e.target.closest("button");
+    if (!knopf) return;
+    for (const box of document.querySelectorAll('input[name="schlag"]')) {
+      if (knopf.dataset.auswahl === "alle") box.checked = true;
+      if (knopf.dataset.auswahl === "keine") box.checked = false;
+      if (knopf.dataset.auswahl === "kultur" && box.dataset.kultur === knopf.dataset.wert) box.checked = true;
+      if (knopf.dataset.auswahl === "betrieb" && box.dataset.betrieb === knopf.dataset.wert) box.checked = true;
+    }
+  });
+</script>
+{% endblock %}

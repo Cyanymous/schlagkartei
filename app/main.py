@@ -406,6 +406,121 @@ def anbauplan_csv(request: Request) -> StreamingResponse:
     return _csv_antwort("anbauplan.csv", kopf, zeilen)
 
 
+# --- Schlagkartei: Feldarbeiten -----------------------------------------------
+
+
+def _feldarbeit_filter(request: Request) -> dict:
+    return {
+        "jahr": request.query_params.get("jahr", ""),
+        "schlag_id": request.query_params.get("schlag", ""),
+        "art": request.query_params.get("art", ""),
+    }
+
+
+@app.get("/feldarbeiten", response_class=HTMLResponse)
+def feldarbeiten(request: Request) -> HTMLResponse:
+    filter_ = _feldarbeit_filter(request)
+    with _db() as conn:
+        liste = schlagkartei.get_feldarbeiten(conn, **filter_)
+        schlaege_liste = schlagkartei.get_schlaege(conn, _aktuelles_jahr())
+        jahre = schlagkartei.get_feldarbeit_jahre(conn)
+        arten = schlagkartei.get_arbeitsarten(conn)
+    return templates.TemplateResponse(
+        request,
+        "feldarbeiten.html",
+        {
+            "feldarbeiten": liste,
+            "filter": filter_,
+            "schlaege": schlaege_liste,
+            "jahre": jahre,
+            "arten": arten,
+            "querystring": str(request.query_params),
+        },
+    )
+
+
+def _feldarbeit_formular(
+    request: Request, conn, feldarbeit, ausgewaehlt: set[int], fehler: str | None = None
+) -> HTMLResponse:
+    datum = (feldarbeit or {}).get("datum") or ""
+    jahr = int(datum[:4]) if datum[:4].isdigit() else _aktuelles_jahr()
+    # Inaktive Schläge nur zeigen, wenn sie schon zu dieser Arbeit gehören.
+    schlaege_liste = [s for s in schlagkartei.get_schlaege(conn, jahr) if s["aktiv"] or s["id"] in ausgewaehlt]
+    return templates.TemplateResponse(
+        request,
+        "feldarbeit.html",
+        {
+            "feldarbeit": feldarbeit,
+            "ausgewaehlt": ausgewaehlt,
+            "schlaege": schlaege_liste,
+            "kultur_je_schlag": schlagkartei.hauptkultur_je_schlag(conn, jahr),
+            "jahr": jahr,
+            "arten": schlagkartei.get_arbeitsarten(conn),
+            "heute": datetime.now().date().isoformat(),
+            "fehler": fehler,
+        },
+        status_code=400 if fehler else 200,
+    )
+
+
+@app.get("/feldarbeiten/neu", response_class=HTMLResponse)
+def feldarbeit_neu(request: Request) -> HTMLResponse:
+    vorauswahl = {_jahr(request.query_params.get("schlag", ""), 0)} - {0}
+    with _db() as conn:
+        return _feldarbeit_formular(request, conn, None, vorauswahl)
+
+
+@app.get("/feldarbeiten/{feldarbeit_id}", response_class=HTMLResponse)
+def feldarbeit_bearbeiten(request: Request, feldarbeit_id: int) -> HTMLResponse:
+    with _db() as conn:
+        feldarbeit, schlag_ids = schlagkartei.get_feldarbeit(conn, feldarbeit_id)
+        if feldarbeit is None:
+            return HTMLResponse("Feldarbeit nicht gefunden.", status_code=404)
+        return _feldarbeit_formular(request, conn, dict(feldarbeit), schlag_ids)
+
+
+async def _feldarbeit_speichern(request: Request, feldarbeit_id: int | None):
+    f = await _formular(request)
+    schlag_ids = [_jahr(x, 0) for x in f.get("schlag", [])]
+    eingabe = {"id": feldarbeit_id, "datum": _feld(f, "datum"), "art": _feld(f, "art"), "bemerkung": _feld(f, "bemerkung")}
+    with _db() as conn:
+        _, fehler = schlagkartei.save_feldarbeit(
+            conn, feldarbeit_id, eingabe["datum"], eingabe["art"], eingabe["bemerkung"], schlag_ids
+        )
+        if fehler:
+            # Formular mit den Eingaben erneut zeigen, damit die Schlagauswahl nicht verloren geht.
+            return _feldarbeit_formular(request, conn, eingabe, set(schlag_ids), fehler)
+    return _zurueck(_feld(f, "zurueck") or "/feldarbeiten")
+
+
+@app.post("/feldarbeiten")
+async def feldarbeit_anlegen(request: Request) -> RedirectResponse:
+    return await _feldarbeit_speichern(request, None)
+
+
+@app.post("/feldarbeiten/{feldarbeit_id}")
+async def feldarbeit_aendern(request: Request, feldarbeit_id: int) -> RedirectResponse:
+    return await _feldarbeit_speichern(request, feldarbeit_id)
+
+
+@app.post("/feldarbeiten/{feldarbeit_id}/loeschen")
+def feldarbeit_loeschen(feldarbeit_id: int) -> RedirectResponse:
+    with _db() as conn:
+        schlagkartei.delete_feldarbeit(conn, feldarbeit_id)
+    return _zurueck("/feldarbeiten")
+
+
+@app.get("/feldarbeiten.csv")
+def feldarbeiten_csv(request: Request) -> StreamingResponse:
+    with _db() as conn:
+        liste = schlagkartei.get_feldarbeiten(conn, **_feldarbeit_filter(request))
+    zeilen = [
+        [f["datum"], f["art"], ", ".join(s["name"] for s in f["schlaege"]), f["bemerkung"] or ""]
+        for f in liste
+    ]
+    return _csv_antwort("feldarbeiten.csv", ["Datum", "Art", "Schläge", "Bemerkung"], zeilen)
+
+
 # --- CSV-Export Pflanzenschutz -------------------------------------------------
 
 

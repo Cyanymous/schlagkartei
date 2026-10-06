@@ -62,3 +62,27 @@ def test_anbau_erfassen_und_im_plan_sehen(client):
 
     csv = client.get("/anbauplan.csv").text
     assert "Hof;Acker;1;2;2025;Hauptkultur;Hafer;AVESA;gut" in csv
+
+
+def test_feldarbeit_erfassen_mit_mehreren_schlaegen(client):
+    _schlag_anlegen(client, "Acker A", "1")
+    _schlag_anlegen(client, "Acker B", "2")
+
+    r = client.post(
+        "/feldarbeiten",
+        data={"datum": "2026-09-08", "art": "Scheiben", "bemerkung": "Roggen scheiben", "schlag": ["1", "2"]},
+    )
+    assert r.status_code == 200
+    assert "08.09.2026" in r.text
+    assert "Acker A" in r.text and "Acker B" in r.text
+
+    csv = client.get("/feldarbeiten.csv").text
+    assert "2026-09-08;Scheiben;Acker A, Acker B;Roggen scheiben" in csv
+
+
+def test_feldarbeit_fehler_behaelt_eingaben(client):
+    _schlag_anlegen(client, "Acker A", "1")
+    r = client.post("/feldarbeiten", data={"datum": "2026-09-08", "art": "", "schlag": ["1"]})
+    assert r.status_code == 400
+    assert "Bitte die Art der Arbeit angeben." in r.text
+    assert 'value="1" data-kultur="" data-betrieb="Hof" checked' in r.text
