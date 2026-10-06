@@ -68,9 +68,10 @@ def _aktuelles_jahr() -> int:
     return datetime.now().year
 
 
-def _importieren(conn) -> None:
-    import_exports(config.export_dir(), conn, config.betrieb_zuordnung())
+def _importieren(conn) -> list[dict]:
+    ergebnisse = import_exports(config.export_dir(), conn, config.betrieb_zuordnung())
     schlagkartei.kulturen_aus_import_uebernehmen(conn)
+    return ergebnisse
 
 
 def _filters_aus_query(request: Request) -> dict:
@@ -169,8 +170,16 @@ def import_status(request: Request) -> HTMLResponse:
 @app.post("/import")
 def import_jetzt() -> RedirectResponse:
     with _db() as conn:
-        _importieren(conn)
-    return _zurueck("/import")
+        ergebnisse = _importieren(conn)
+    neu = [e["dateiname"] for e in ergebnisse if e["status"] != "entfernt"]
+    entfernt = [e["dateiname"] for e in ergebnisse if e["status"] == "entfernt"]
+    teile = []
+    if neu:
+        teile.append(f"Neu eingelesen: {', '.join(neu)}.")
+    if entfernt:
+        teile.append(f"Entfernt, weil nicht mehr im Export-Ordner: {', '.join(entfernt)}.")
+    hinweis = " ".join(teile) or "Keine neuen oder entfernten Dateien."
+    return RedirectResponse("/import?hinweis=" + quote(hinweis), status_code=303)
 
 
 # --- Schlagkartei: Kulturen ----------------------------------------------------

@@ -27,8 +27,13 @@ Die PSM-DOK-Exporte (ZIP mit JSON + PDF) kommen unverändert in den Ordner
 Container – es wird dort nichts verändert, verschoben oder gelöscht.
 
 Eingelesen wird automatisch beim Start der App sowie über den Knopf
-„Jetzt importieren“ auf der Import-Status-Seite. Ein erneuter Import
+„Jetzt importieren“ auf der Import-Seite. Ein erneuter Import
 derselben Dateien erzeugt keine Duplikate.
+
+**Datei versehentlich abgelegt?** Datei aus `exports/` löschen und auf der
+Import-Seite „Jetzt importieren“ klicken (oder die App neu starten). Die
+Behandlungen aus dieser Datei verschwinden dann samt ihren Notizen – außer
+sie stehen auch noch in einer anderen Datei im Ordner.
 
 ## Bedienung
 

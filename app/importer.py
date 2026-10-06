@@ -271,8 +271,10 @@ def import_exports(
         p for p in export_dir.iterdir() if p.is_file() and p.suffix.lower() in (".zip", ".json")
     )
 
+    vorhandene_hashes = {}
     for pfad in dateien:
         sha256 = _sha256_datei(pfad)
+        vorhandene_hashes[sha256] = pfad
         if sha256 in bekannte_hashes:
             continue
 
@@ -321,4 +323,67 @@ def import_exports(
             }
         )
 
+    ergebnisse += _entfernte_dateien_bereinigen(conn, vorhandene_hashes, zuordnung)
     return ergebnisse
+
+
+def _entfernte_dateien_bereinigen(
+    conn: sqlite3.Connection, vorhandene_hashes: dict[str, Path], zuordnung: dict[str, str]
+) -> list[dict]:
+    """Entfernt die Daten von Dateien, die nicht mehr im Export-Ordner liegen.
+
+    So lässt sich eine versehentlich abgelegte Datei rückgängig machen: Datei
+    aus exports/ löschen, neu importieren. Anwendungen, die auch in einer noch
+    vorhandenen Datei stehen (überlappende Exporte), bleiben und werden aus
+    dieser Datei neu gelesen. Notizen zu entfernten Anwendungen werden
+    mitgelöscht (Entscheidung des Betreibers, SPEC.md Abschnitt 6).
+    """
+    entfernt = [
+        r for r in conn.execute("SELECT id, dateiname, sha256 FROM import_files").fetchall()
+        if r["sha256"] not in vorhandene_hashes
+    ]
+    if not entfernt:
+        return []
+    entfernte_ids = [r["id"] for r in entfernt]
+    platzhalter = ",".join("?" * len(entfernte_ids))
+    betroffen = {
+        r[0] for r in conn.execute(
+            f"SELECT datensatz_key FROM applications WHERE import_file_id IN ({platzhalter})", entfernte_ids
+        )
+    }
+
+    # Welche betroffenen Anwendungen stehen noch in einer verbliebenen Datei?
+    # Bei mehreren gewinnt wie beim normalen Import die zuletzt gelesene.
+    noch_vorhanden: dict[str, tuple[NormalizedApplication, int]] = {}
+    if betroffen:
+        datei_ids = {r["sha256"]: r["id"] for r in conn.execute("SELECT id, sha256 FROM import_files")}
+        for sha256, pfad in sorted(vorhandene_hashes.items(), key=lambda x: x[1]):
+            if sha256 not in datei_ids:
+                continue
+            try:
+                eintraege = _lies_json_eintraege(pfad)
+            except (zipfile.BadZipFile, ValueError, json.JSONDecodeError, OSError):
+                continue  # schon beim Import als Fehler vermerkt
+            for json_name, record in eintraege:
+                try:
+                    app = normalize_record(record, json_name, zuordnung)
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if app.datensatz_key in betroffen:
+                    noch_vorhanden[app.datensatz_key] = (app, datei_ids[sha256])
+
+    jetzt = datetime.now(UTC).isoformat()
+    for key in betroffen:
+        if key in noch_vorhanden:
+            app, import_file_id = noch_vorhanden[key]
+            _upsert_application(conn, app, import_file_id, jetzt)
+            conn.execute(
+                "UPDATE applications SET import_file_id = ? WHERE datensatz_key = ?", (import_file_id, key)
+            )
+        else:
+            conn.execute("DELETE FROM notizen WHERE datensatz_key = ?", (key,))
+            conn.execute("DELETE FROM applications WHERE datensatz_key = ?", (key,))
+
+    conn.execute(f"DELETE FROM import_files WHERE id IN ({platzhalter})", entfernte_ids)
+    conn.commit()
+    return [{"dateiname": r["dateiname"], "status": "entfernt"} for r in entfernt]

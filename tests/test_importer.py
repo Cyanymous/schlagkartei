@@ -190,3 +190,70 @@ def test_notiz_bleibt_bei_korrigiertem_reimport_erhalten(tmp_path):
 
     assert conn.execute("SELECT anwender FROM applications").fetchone()[0] == "Korrigiert"
     assert conn.execute("SELECT text FROM notizen").fetchone()[0] == "meine Notiz"
+
+
+def _benevia_record(export_dir):
+    with zipfile.ZipFile(next(export_dir.glob("*Benevia*"))) as zf:
+        return json.loads(zf.read(next(n for n in zf.namelist() if n.endswith(".json"))))
+
+
+def test_entfernte_datei_entfernt_ihre_anwendung_samt_notiz(conn, export_dir):
+    from app.queries import save_notiz
+
+    import_exports(export_dir, conn, {})
+    benevia_id = conn.execute(
+        "SELECT a.id FROM applications a JOIN anwendung_mittel m ON m.application_id = a.id WHERE m.name = 'BENEVIA'"
+    ).fetchone()[0]
+    save_notiz(conn, benevia_id, "versehentlich", "2026-10-06T08:00:00+00:00")
+
+    next(export_dir.glob("*Benevia*")).unlink()
+    ergebnis = import_exports(export_dir, conn, {})
+
+    assert {"dateiname": "2026-05-04-Benevia.zip", "status": "entfernt"} in ergebnis
+    assert conn.execute("SELECT COUNT(*) FROM applications").fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM anwendung_mittel WHERE name = 'BENEVIA'").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM notizen").fetchone()[0] == 0
+    assert [r[0] for r in conn.execute("SELECT dateiname FROM import_files")] == ["2026-05-24 Mospilan.zip"]
+
+    # Datei wieder zurücklegen: Anwendung ist wieder da.
+    shutil.copy(FIXTURES / "2026-05-04-Benevia.zip", export_dir)
+    import_exports(export_dir, conn, {})
+    assert conn.execute("SELECT COUNT(*) FROM applications").fetchone()[0] == 2
+
+
+def test_anwendung_bleibt_wenn_sie_noch_in_anderer_datei_steht(conn, export_dir):
+    guid = _benevia_record(export_dir)["guid"]
+    (export_dir / "kopie.json").write_text(json.dumps(_benevia_record(export_dir)))
+    import_exports(export_dir, conn, {})
+
+    # Die Datei entfernen, auf die die Anwendung gerade zeigt.
+    datei = conn.execute(
+        """SELECT f.dateiname FROM applications a JOIN import_files f ON f.id = a.import_file_id
+           WHERE a.datensatz_key = ?""",
+        (guid,),
+    ).fetchone()[0]
+    (export_dir / datei).unlink()
+    import_exports(export_dir, conn, {})
+
+    assert conn.execute("SELECT COUNT(*) FROM applications").fetchone()[0] == 2
+    verbleibend = conn.execute(
+        """SELECT f.dateiname FROM applications a JOIN import_files f ON f.id = a.import_file_id
+           WHERE a.datensatz_key = ?""",
+        (guid,),
+    ).fetchone()[0]
+    assert verbleibend != datei
+    assert conn.execute("SELECT COUNT(*) FROM anwendung_mittel WHERE name = 'BENEVIA'").fetchone()[0] == 1
+
+
+def test_entfernte_korrektur_stellt_vorige_fassung_wieder_her(conn, export_dir):
+    import_exports(export_dir, conn, {})
+    korrektur = _benevia_record(export_dir)
+    korrektur["anwendung"]["anwender"] = "Korrigiert"
+    (export_dir / "zz-korrektur.json").write_text(json.dumps(korrektur))
+    import_exports(export_dir, conn, {})
+    assert conn.execute("SELECT COUNT(*) FROM applications WHERE anwender = 'Korrigiert'").fetchone()[0] == 1
+
+    (export_dir / "zz-korrektur.json").unlink()
+    import_exports(export_dir, conn, {})
+    assert conn.execute("SELECT COUNT(*) FROM applications WHERE anwender = 'Korrigiert'").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM applications").fetchone()[0] == 2

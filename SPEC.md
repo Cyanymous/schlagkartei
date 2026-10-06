@@ -199,6 +199,13 @@ Start in Reihenfolge angewendet werden (Stand über `PRAGMA user_version`).
 - **Fehlertolerant:** Eine beschädigte ZIP, eine unlesbare oder eine unerwartet
   aufgebaute JSON-Datei bricht den Import nicht ab. Sie wird mit Status "Fehler"
   und Meldung in `import_files` vermerkt und in der Oberfläche angezeigt.
+- **Entfernte Dateien:** Liegt eine bereits importierte Datei nicht mehr im
+  Export-Ordner, entfernt der nächste Import ihre Anwendungen aus der
+  Datenbank (Wunsch des Betreibers vom 06.10.2026, um versehentlich abgelegte
+  Dateien rückgängig zu machen). Steht eine Anwendung zusätzlich in einer
+  noch vorhandenen Datei, bleibt sie und wird aus dieser Datei neu gelesen.
+  Notizen zu entfernten Anwendungen werden mitgelöscht. Die App löscht dabei
+  nie selbst Dateien; das Entfernen aus dem Ordner erledigt der Betreiber.
 - Da der importierte Teil vollständig aus dem Export-Ordner rekonstruierbar ist,
   muss "Datenbank löschen und neu importieren" jederzeit dasselbe Ergebnis
   liefern. Das gilt nur für die importierten Daten: Notizen gehen dabei

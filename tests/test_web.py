@@ -126,3 +126,11 @@ def test_detail_verlinkt_zugeordneten_schlag(client):
     )
     r = client.get(_detail_link(client))
     assert "→ Schlag Am Bach" in r.text
+
+
+def test_import_knopf_meldet_entfernte_datei(client, tmp_path):
+    next((tmp_path / "exports").glob("*Benevia*")).unlink()
+    r = client.post("/import")
+    assert r.status_code == 200
+    assert "Entfernt, weil nicht mehr im Export-Ordner: 2026-05-04-Benevia.zip." in r.text
+    assert "BENEVIA" not in client.get("/").text

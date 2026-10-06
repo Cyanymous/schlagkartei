@@ -24,6 +24,9 @@
     {% if meldung %}
     <div class="meldung-fehler">{{ meldung }}</div>
     {% endif %}
+    {% if request.query_params.get("hinweis") %}
+    <div class="meldung-ok">{{ request.query_params.get("hinweis") }}</div>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 </body>

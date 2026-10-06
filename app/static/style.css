@@ -299,6 +299,16 @@ input.code {
   font-weight: 600;
 }
 
+.meldung-ok {
+  background: var(--ok-bg);
+  color: var(--primary-dark);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
 .einleitung,
 .hinweis {
   color: var(--muted);

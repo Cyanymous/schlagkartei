@@ -2,6 +2,12 @@
 {% block title %}Import-Status – Schlagkartei{% endblock %}
 {% block content %}
 <h1>Import-Status</h1>
+<p class="einleitung">
+  Eingelesen werden alle ZIP- und JSON-Dateien im Export-Ordner, beim Start der App und
+  mit dem Knopf unten. Eine Datei versehentlich abgelegt? Datei aus dem Export-Ordner
+  löschen und neu importieren: Ihre Behandlungen (samt Notizen) verschwinden dann, außer
+  sie stehen auch noch in einer anderen Datei.
+</p>
 
 <form method="post" action="/import" class="import">
   <button type="submit">Jetzt importieren</button>
