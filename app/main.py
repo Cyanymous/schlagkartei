@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
 from app import config, queries, schlagkartei
-from app.db import connect
+from app.db import connect, taegliche_sicherung
 from app.importer import import_exports
 
 
@@ -21,6 +21,8 @@ def _get_conn():
 
 @contextmanager
 def _db():
+    # Die erste Anfrage des Tages sichert den Stand vom Tagesbeginn.
+    taegliche_sicherung(config.db_path())
     conn = _get_conn()
     try:
         yield conn

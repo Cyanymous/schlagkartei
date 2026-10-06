@@ -330,7 +330,8 @@ Regel 2); `data/` ist damit der einzige Ort, an dem sie stehen.
 ### Fachliche Entscheidungen
 
 - **Schläge:** ca. 15. Jeder Schlag gehört genau einem Betrieb und hat einen
-  Umgangsnamen (z. B. „Hinterm Hof“).
+  Umgangsnamen (z. B. „Hinterm Hof“). Schläge werden nicht gelöscht, sondern
+  auf inaktiv gesetzt, damit Fruchtfolge und Feldarbeiten erhalten bleiben.
 - **Schlagnummer und Größe je Jahr:** Beide können sich im Agrarantrag von
   Jahr zu Jahr ändern. Sie werden als Stand „ab Jahr“ gespeichert und gelten,
   bis ein neuer Stand eingetragen wird – so muss nicht jedes Jahr alles neu
@@ -342,7 +343,9 @@ Regel 2); `data/` ist damit der einzige Ort, an dem sie stehen.
 - **Kulturen:** eigene Liste mit Name und EPPO-Code. Vorbelegt mit gängigen
   Kulturen, deren Codes gegen die EPPO Global Database (gd.eppo.int) geprüft
   sind; ergänzt um alle Kulturen aus den PSM-DOK-Exporten (nur neue Namen,
-  vorhandene Einträge werden nicht überschrieben).
+  vorhandene Einträge werden nicht überschrieben). Kulturen können als
+  mehrjährig markiert werden (z. B. Spargel, Luzerne); für sie gibt es keinen
+  Fruchtfolge-Hinweis.
 - **Feldarbeiten:** Datum, Art (freier Text mit Vorschlägen aus bisherigen
   Einträgen), Bemerkung. Eine Feldarbeit kann für mehrere Schläge auf einmal
   erfasst werden.
@@ -356,7 +359,7 @@ Regel 2); `data/` ist damit der einzige Ort, an dem sie stehen.
 
 - `schlaege`: Betrieb, Umgangsname, aktiv.
 - `schlag_staende`: Schlag, ab Jahr, Schlagnummer, Größe in ha.
-- `kulturen`: Name (eindeutig), EPPO-Code.
+- `kulturen`: Name (eindeutig), EPPO-Code, mehrjährig ja/nein.
 - `anbau`: Schlag, Jahr, Kultur, Art, Bemerkung.
 - `feldarbeiten`: Datum, Art, Bemerkung.
 - `feldarbeit_schlaege`: Zuordnung Feldarbeit ↔ Schlag (mehrere je Arbeit).
