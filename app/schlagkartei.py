@@ -24,7 +24,9 @@ def get_kulturen(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     ).fetchall()
 
 
-def save_kultur(conn: sqlite3.Connection, kultur_id: int | None, name: str, eppo_code: str) -> str | None:
+def save_kultur(
+    conn: sqlite3.Connection, kultur_id: int | None, name: str, eppo_code: str, mehrjaehrig: bool = False
+) -> str | None:
     """Gibt eine Fehlermeldung zurück oder None."""
     name = name.strip()
     eppo_code = eppo_code.strip().upper() or None
@@ -36,10 +38,14 @@ def save_kultur(conn: sqlite3.Connection, kultur_id: int | None, name: str, eppo
     if vorhanden:
         return f"Die Kultur „{name}“ gibt es schon."
     if kultur_id is None:
-        conn.execute("INSERT INTO kulturen (name, eppo_code) VALUES (?, ?)", (name, eppo_code))
+        conn.execute(
+            "INSERT INTO kulturen (name, eppo_code, mehrjaehrig) VALUES (?, ?, ?)",
+            (name, eppo_code, int(mehrjaehrig)),
+        )
     else:
         conn.execute(
-            "UPDATE kulturen SET name = ?, eppo_code = ? WHERE id = ?", (name, eppo_code, kultur_id)
+            "UPDATE kulturen SET name = ?, eppo_code = ?, mehrjaehrig = ? WHERE id = ?",
+            (name, eppo_code, int(mehrjaehrig), kultur_id),
         )
     conn.commit()
     return None
@@ -196,3 +202,110 @@ def delete_stand(conn: sqlite3.Connection, stand_id: int) -> str | None:
     conn.execute("DELETE FROM schlag_staende WHERE id = ?", (stand_id,))
     conn.commit()
     return None
+
+
+# --- Anbau ------------------------------------------------------------------
+
+
+def get_anbau(conn: sqlite3.Connection, schlag_id: int | None = None) -> list[sqlite3.Row]:
+    bedingung = "WHERE a.schlag_id = :schlag_id" if schlag_id is not None else ""
+    return conn.execute(
+        f"""SELECT a.*, k.name AS kultur, k.eppo_code, k.mehrjaehrig
+           FROM anbau a JOIN kulturen k ON k.id = a.kultur_id
+           {bedingung}
+           ORDER BY a.jahr,
+               CASE a.art WHEN 'Hauptkultur' THEN 1 WHEN 'Untersaat' THEN 2
+                          WHEN 'Zweitfrucht' THEN 3 ELSE 4 END,
+               k.name""",
+        {"schlag_id": schlag_id},
+    ).fetchall()
+
+
+def anbau_matrix(anbau: list[sqlite3.Row]) -> dict[tuple[int, int], list[sqlite3.Row]]:
+    """Ordnet die Einträge nach (schlag_id, jahr) für die Tabelle Schläge × Jahre."""
+    matrix: dict[tuple[int, int], list[sqlite3.Row]] = {}
+    for eintrag in anbau:
+        matrix.setdefault((eintrag["schlag_id"], eintrag["jahr"]), []).append(eintrag)
+    return matrix
+
+
+def wiederholte_hauptkultur(matrix: dict[tuple[int, int], list[sqlite3.Row]]) -> set[tuple[int, int]]:
+    """Zellen, deren Hauptkultur schon im Vorjahr auf demselben Schlag stand.
+
+    Mehrjährige Kulturen zählen nicht, sie stehen gewollt mehrere Jahre.
+    """
+    def hauptkulturen(schluessel):
+        return {
+            e["kultur_id"]
+            for e in matrix.get(schluessel, [])
+            if e["art"] == "Hauptkultur" and not e["mehrjaehrig"]
+        }
+
+    treffer = set()
+    for schlag_id, jahr in matrix:
+        if hauptkulturen((schlag_id, jahr)) & hauptkulturen((schlag_id, jahr - 1)):
+            treffer.add((schlag_id, jahr))
+    return treffer
+
+
+def anbauumfang(conn: sqlite3.Connection, betrieb: str = "") -> list[sqlite3.Row]:
+    """Summe der Fläche je Betrieb, Jahr und Hauptkultur."""
+    return conn.execute(
+        """SELECT s.betrieb, a.jahr, k.name AS kultur,
+               SUM((SELECT st.groesse_ha FROM schlag_staende st
+                    WHERE st.schlag_id = a.schlag_id AND st.ab_jahr <= a.jahr
+                    ORDER BY st.ab_jahr DESC LIMIT 1)) AS ha
+           FROM anbau a
+           JOIN kulturen k ON k.id = a.kultur_id
+           JOIN schlaege s ON s.id = a.schlag_id
+           WHERE a.art = 'Hauptkultur' AND (:betrieb = '' OR s.betrieb = :betrieb)
+           GROUP BY s.betrieb, a.jahr, k.name
+           ORDER BY s.betrieb, k.name, a.jahr""",
+        {"betrieb": betrieb},
+    ).fetchall()
+
+
+def _pruefe_anbau(conn, jahr, letztes_jahr, kultur_id, art) -> str | None:
+    if not ERSTES_JAHR <= jahr <= letztes_jahr:
+        return f"Anbau kann nur für {ERSTES_JAHR} bis {letztes_jahr} erfasst werden."
+    if art not in ANBAU_ARTEN:
+        return "Unbekannte Art."
+    if not conn.execute("SELECT 1 FROM kulturen WHERE id = ?", (kultur_id,)).fetchone():
+        return "Bitte eine Kultur auswählen."
+    return None
+
+
+def add_anbau(
+    conn: sqlite3.Connection, schlag_id: int, jahr: int, letztes_jahr: int, kultur_id: int, art: str, bemerkung: str
+) -> str | None:
+    fehler = _pruefe_anbau(conn, jahr, letztes_jahr, kultur_id, art)
+    if fehler:
+        return fehler
+    conn.execute(
+        "INSERT INTO anbau (schlag_id, jahr, kultur_id, art, bemerkung) VALUES (?, ?, ?, ?, ?)",
+        (schlag_id, jahr, kultur_id, art, bemerkung.strip() or None),
+    )
+    conn.commit()
+    return None
+
+
+def update_anbau(
+    conn: sqlite3.Connection, anbau_id: int, letztes_jahr: int, kultur_id: int, art: str, bemerkung: str
+) -> str | None:
+    eintrag = conn.execute("SELECT jahr FROM anbau WHERE id = ?", (anbau_id,)).fetchone()
+    if eintrag is None:
+        return None
+    fehler = _pruefe_anbau(conn, eintrag["jahr"], letztes_jahr, kultur_id, art)
+    if fehler:
+        return fehler
+    conn.execute(
+        "UPDATE anbau SET kultur_id = ?, art = ?, bemerkung = ? WHERE id = ?",
+        (kultur_id, art, bemerkung.strip() or None, anbau_id),
+    )
+    conn.commit()
+    return None
+
+
+def delete_anbau(conn: sqlite3.Connection, anbau_id: int) -> None:
+    conn.execute("DELETE FROM anbau WHERE id = ?", (anbau_id,))
+    conn.commit()

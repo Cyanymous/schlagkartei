@@ -38,3 +38,27 @@ def test_kulturen_seite_zeigt_eppo_codes(client):
     r = client.get("/kulturen")
     assert "Winterweizen" in r.text
     assert "TRZAW" in r.text
+
+
+def _schlag_anlegen(client, name="Acker", nummer="1"):
+    client.post(
+        "/schlaege",
+        data={"betrieb": "Hof", "name": name, "schlagnummer": nummer, "groesse_ha": "2", "ab_jahr": "2020"},
+    )
+
+
+def test_anbau_erfassen_und_im_plan_sehen(client):
+    _schlag_anlegen(client)
+    kulturen = client.get("/anbauplan/1/2025").text
+    hafer_id = kulturen.split(">Hafer (AVESA)<")[0].rsplit('value="', 1)[1].split('"')[0]
+
+    r = client.post("/anbauplan/1/2025", data={"art": "Hauptkultur", "kultur_id": hafer_id, "bemerkung": "gut"})
+    assert r.status_code == 200
+    assert 'value="gut"' in r.text
+
+    plan = client.get("/anbauplan").text
+    assert "Hafer" in plan
+    assert "Planung" in plan
+
+    csv = client.get("/anbauplan.csv").text
+    assert "Hof;Acker;1;2;2025;Hauptkultur;Hafer;AVESA;gut" in csv

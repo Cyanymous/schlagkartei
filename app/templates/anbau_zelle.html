@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Anbau {{ jahr }} – Schlagkartei{% endblock %}
+{% block content %}
+{% if not schlag %}
+<p>Schlag nicht gefunden.</p>
+{% else %}
+{% set zurueck = "/anbauplan/" ~ schlag.id ~ "/" ~ jahr %}
+<p><a href="/anbauplan">&larr; Anbauplan</a> · <a href="/schlaege/{{ schlag.id }}">Schlag {{ schlag.name }}</a></p>
+<h1>{{ schlag.name }} · {{ jahr }}{% if planung %} <span class="badge planung-badge">Planung</span>{% endif %}</h1>
+<p class="hinweis">
+  Schlagnummer {{ schlag.schlagnummer or "–" }}{% if schlag.groesse_ha %} · {{ schlag.groesse_ha | ha }} ha{% endif %}
+  {% if vorjahr %} · Vorjahr {{ jahr - 1 }}: {{ vorjahr | map(attribute="kultur") | join(", ") }}{% endif %}
+</p>
+
+<section class="karte">
+  <h2>Kulturen {{ jahr }}</h2>
+  {% for e in eintraege %}
+  <div class="anbau-eintrag">
+    <form class="formzeile" method="post" action="/anbau/{{ e.id }}">
+      <input type="hidden" name="zurueck" value="{{ zurueck }}">
+      <label>Art
+        <select name="art">
+          {% for a in arten %}<option {% if a == e.art %}selected{% endif %}>{{ a }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Kultur
+        <select name="kultur_id">
+          {% for k in kulturen %}<option value="{{ k.id }}" {% if k.id == e.kultur_id %}selected{% endif %}>{{ k.name }}{% if k.eppo_code %} ({{ k.eppo_code }}){% endif %}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="breit">Bemerkung <input name="bemerkung" value="{{ e.bemerkung or '' }}"></label>
+      <button type="submit" class="knopf-zweit">Speichern</button>
+    </form>
+    <form method="post" action="/anbau/{{ e.id }}/loeschen">
+      <input type="hidden" name="zurueck" value="{{ zurueck }}">
+      <button type="submit" class="knopf-gefahr">Entfernen</button>
+    </form>
+  </div>
+  {% else %}
+  <p class="hinweis">Für {{ jahr }} ist noch nichts eingetragen.</p>
+  {% endfor %}
+</section>
+
+<section class="karte">
+  <h2>Kultur hinzufügen</h2>
+  <form class="formzeile" method="post" action="{{ zurueck }}">
+    <label>Art
+      <select name="art">
+        {% for a in arten %}<option {% if a == ("Zwischenfrucht" if eintraege else "Hauptkultur") %}selected{% endif %}>{{ a }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Kultur
+      <select name="kultur_id" required>
+        <option value="">– auswählen –</option>
+        {% for k in kulturen %}<option value="{{ k.id }}">{{ k.name }}{% if k.eppo_code %} ({{ k.eppo_code }}){% endif %}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="breit">Bemerkung <input name="bemerkung"></label>
+    <button type="submit">Hinzufügen</button>
+  </form>
+  <p class="hinweis">Kultur fehlt? Unter <a href="/kulturen">Kulturen</a> anlegen.</p>
+</section>
+{% endif %}
+{% endblock %}

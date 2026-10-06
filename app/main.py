@@ -194,7 +194,9 @@ def kulturen(request: Request) -> HTMLResponse:
 async def kultur_anlegen(request: Request) -> RedirectResponse:
     f = await _formular(request)
     with _db() as conn:
-        fehler = schlagkartei.save_kultur(conn, None, _feld(f, "name"), _feld(f, "eppo_code"))
+        fehler = schlagkartei.save_kultur(
+            conn, None, _feld(f, "name"), _feld(f, "eppo_code"), _feld(f, "mehrjaehrig") == "1"
+        )
     return _zurueck("/kulturen", fehler)
 
 
@@ -202,7 +204,9 @@ async def kultur_anlegen(request: Request) -> RedirectResponse:
 async def kultur_speichern(request: Request, kultur_id: int) -> RedirectResponse:
     f = await _formular(request)
     with _db() as conn:
-        fehler = schlagkartei.save_kultur(conn, kultur_id, _feld(f, "name"), _feld(f, "eppo_code"))
+        fehler = schlagkartei.save_kultur(
+            conn, kultur_id, _feld(f, "name"), _feld(f, "eppo_code"), _feld(f, "mehrjaehrig") == "1"
+        )
     return _zurueck("/kulturen", fehler)
 
 
@@ -291,6 +295,117 @@ def stand_loeschen(schlag_id: int, stand_id: int) -> RedirectResponse:
     return _zurueck(f"/schlaege/{schlag_id}", fehler)
 
 
+# --- Schlagkartei: Anbauplan ---------------------------------------------------
+
+
+def _jahre() -> list[int]:
+    """2020 bis zum nächsten Jahr; das letzte ist die Planung."""
+    return list(range(schlagkartei.ERSTES_JAHR, _aktuelles_jahr() + 2))
+
+
+@app.get("/anbauplan", response_class=HTMLResponse)
+def anbauplan(request: Request) -> HTMLResponse:
+    betrieb = request.query_params.get("betrieb", "")
+    with _db() as conn:
+        schlaege_liste = [
+            s for s in schlagkartei.get_schlaege(conn, _aktuelles_jahr()) if not betrieb or s["betrieb"] == betrieb
+        ]
+        matrix = schlagkartei.anbau_matrix(schlagkartei.get_anbau(conn))
+        umfang = schlagkartei.anbauumfang(conn, betrieb)
+        betriebe = schlagkartei.get_betriebe(conn)
+    return templates.TemplateResponse(
+        request,
+        "anbauplan.html",
+        {
+            "schlaege": schlaege_liste,
+            "jahre": _jahre(),
+            "matrix": matrix,
+            "wiederholt": schlagkartei.wiederholte_hauptkultur(matrix),
+            "umfang": umfang,
+            "betriebe": betriebe,
+            "betrieb": betrieb,
+        },
+    )
+
+
+@app.get("/anbauplan/{schlag_id}/{jahr}", response_class=HTMLResponse)
+def anbau_zelle(request: Request, schlag_id: int, jahr: int) -> HTMLResponse:
+    with _db() as conn:
+        schlag = schlagkartei.get_schlag(conn, schlag_id, jahr)
+        eintraege = [e for e in schlagkartei.get_anbau(conn, schlag_id) if e["jahr"] == jahr]
+        vorjahr = [e for e in schlagkartei.get_anbau(conn, schlag_id) if e["jahr"] == jahr - 1]
+        kulturen_liste = schlagkartei.get_kulturen(conn)
+    return templates.TemplateResponse(
+        request,
+        "anbau_zelle.html",
+        {
+            "schlag": schlag,
+            "jahr": jahr,
+            "planung": jahr > _aktuelles_jahr(),
+            "eintraege": eintraege,
+            "vorjahr": vorjahr,
+            "kulturen": kulturen_liste,
+            "arten": schlagkartei.ANBAU_ARTEN,
+        },
+    )
+
+
+@app.post("/anbauplan/{schlag_id}/{jahr}")
+async def anbau_anlegen(request: Request, schlag_id: int, jahr: int) -> RedirectResponse:
+    f = await _formular(request)
+    with _db() as conn:
+        fehler = schlagkartei.add_anbau(
+            conn, schlag_id, jahr, _jahre()[-1], _jahr(_feld(f, "kultur_id"), 0), _feld(f, "art"), _feld(f, "bemerkung")
+        )
+    return _zurueck(f"/anbauplan/{schlag_id}/{jahr}", fehler)
+
+
+@app.post("/anbau/{anbau_id}")
+async def anbau_speichern(request: Request, anbau_id: int) -> RedirectResponse:
+    f = await _formular(request)
+    with _db() as conn:
+        fehler = schlagkartei.update_anbau(
+            conn, anbau_id, _jahre()[-1], _jahr(_feld(f, "kultur_id"), 0), _feld(f, "art"), _feld(f, "bemerkung")
+        )
+    return _zurueck(_feld(f, "zurueck") or "/anbauplan", fehler)
+
+
+@app.post("/anbau/{anbau_id}/loeschen")
+async def anbau_loeschen(request: Request, anbau_id: int) -> RedirectResponse:
+    f = await _formular(request)
+    with _db() as conn:
+        schlagkartei.delete_anbau(conn, anbau_id)
+    return _zurueck(_feld(f, "zurueck") or "/anbauplan")
+
+
+@app.get("/anbauplan.csv")
+def anbauplan_csv(request: Request) -> StreamingResponse:
+    betrieb = request.query_params.get("betrieb", "")
+    with _db() as conn:
+        schlaege_nach_id = {s["id"]: s for s in schlagkartei.get_schlaege(conn, _aktuelles_jahr())}
+        zeilen = []
+        for e in schlagkartei.get_anbau(conn):
+            s = schlaege_nach_id[e["schlag_id"]]
+            if betrieb and s["betrieb"] != betrieb:
+                continue
+            stand = schlagkartei.get_schlag(conn, s["id"], e["jahr"])
+            zeilen.append(
+                [
+                    s["betrieb"],
+                    s["name"],
+                    stand["schlagnummer"] or "",
+                    _ha(stand["groesse_ha"]),
+                    e["jahr"],
+                    e["art"],
+                    e["kultur"],
+                    e["eppo_code"] or "",
+                    e["bemerkung"] or "",
+                ]
+            )
+    kopf = ["Betrieb", "Schlag", "Schlagnummer", "Größe (ha)", "Jahr", "Art", "Kultur", "EPPO-Code", "Bemerkung"]
+    return _csv_antwort("anbauplan.csv", kopf, zeilen)
+
+
 # --- CSV-Export Pflanzenschutz -------------------------------------------------
 
 
@@ -303,24 +418,31 @@ def export_csv(request: Request) -> StreamingResponse:
     finally:
         conn.close()
 
+    kopf = ["Datum", "Betrieb", "Kultur", "Schlag", "Mittel", "Anwender"]
+    zeilen = [
+        [
+            r["datum"],
+            r["betrieb"],
+            ", ".join(r["kulturen"]),
+            ", ".join(r["schlaege"]),
+            ", ".join(r["mittel"]),
+            r["anwender"] or "",
+        ]
+        for r in rows
+    ]
+    return _csv_antwort("schlagkartei.csv", kopf, zeilen)
+
+
+def _csv_antwort(dateiname: str, kopf: list[str], zeilen: list[list]) -> StreamingResponse:
+    """CSV mit BOM und Semikolon, damit Excel/LibreOffice mit deutscher Einstellung sie direkt öffnen."""
     puffer = io.StringIO()
-    puffer.write("﻿")
+    puffer.write("\ufeff")
     writer = csv.writer(puffer, delimiter=";")
-    writer.writerow(["Datum", "Betrieb", "Kultur", "Schlag", "Mittel", "Anwender"])
-    for r in rows:
-        writer.writerow(
-            [
-                r["datum"],
-                r["betrieb"],
-                ", ".join(r["kulturen"]),
-                ", ".join(r["schlaege"]),
-                ", ".join(r["mittel"]),
-                r["anwender"] or "",
-            ]
-        )
+    writer.writerow(kopf)
+    writer.writerows(zeilen)
     puffer.seek(0)
     return StreamingResponse(
         puffer,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=schlagkartei.csv"},
+        headers={"Content-Disposition": f"attachment; filename={dateiname}"},
     )

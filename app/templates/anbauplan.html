@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Anbauplan – Schlagkartei{% endblock %}
+{% block content %}
+{% set planjahr = jahre[-1] %}
+<h1>Anbauplan</h1>
+
+<form method="get" action="/anbauplan" class="filter">
+  <label>Betrieb
+    <select name="betrieb">
+      <option value="">alle</option>
+      {% for b in betriebe %}
+      <option value="{{ b }}" {% if betrieb == b %}selected{% endif %}>{{ b }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit">Anzeigen</button>
+  <a href="/anbauplan.csv?betrieb={{ betrieb | urlencode }}">CSV-Export</a>
+</form>
+
+<p class="trefferzahl">Zelle anklicken zum Bearbeiten. <span class="warnung">⚠</span> = gleiche Hauptkultur wie im Vorjahr.</p>
+<div class="tabelle tabelle-breit">
+<table class="anbauplan">
+  <thead>
+    <tr>
+      <th class="schlagspalte">Schlag</th>
+      {% for j in jahre %}
+      <th {% if j == planjahr %}class="planung"{% endif %}>{{ j }}{% if j == planjahr %}<br><small>Planung</small>{% endif %}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in schlaege %}
+    <tr {% if not s.aktiv %}class="inaktiv"{% endif %}>
+      <td class="schlagspalte">
+        <a href="/schlaege/{{ s.id }}">{{ s.name }}</a>
+        <small>{{ s.schlagnummer or "" }}{% if s.groesse_ha %} · {{ s.groesse_ha | ha }} ha{% endif %}</small>
+      </td>
+      {% for j in jahre %}
+      {% set eintraege = matrix.get((s.id, j), []) %}
+      <td class="zelle {% if j == planjahr %}planung{% endif %} {% if (s.id, j) in wiederholt %}wiederholt{% endif %}">
+        <a class="zellenlink" href="/anbauplan/{{ s.id }}/{{ j }}" aria-label="{{ s.name }} {{ j }} bearbeiten">
+          {% for e in eintraege %}
+          <span class="anbau anbau-{{ e.art | lower }}" title="{{ e.art }}{% if e.bemerkung %}: {{ e.bemerkung }}{% endif %}">
+            {% if e.art != "Hauptkultur" %}<small>{{ {"Zwischenfrucht": "ZF", "Untersaat": "US", "Zweitfrucht": "2.F"}[e.art] }}</small>{% endif %}
+            {{ e.kultur }}{% if e.bemerkung %} <span class="notiz-marker">✎</span>{% endif %}
+          </span>
+          {% else %}
+          <span class="leer-zelle">+</span>
+          {% endfor %}
+          {% if (s.id, j) in wiederholt %}<span class="warnung" title="Gleiche Hauptkultur wie im Vorjahr">⚠</span>{% endif %}
+        </a>
+      </td>
+      {% endfor %}
+    </tr>
+    {% else %}
+    <tr><td colspan="{{ jahre | length + 1 }}" class="leer">Noch keine Schläge angelegt – zuerst unter <a href="/schlaege">Schläge</a> anlegen.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2 class="abschnitt">Anbauumfang (Hauptkulturen, ha)</h2>
+{% if umfang %}
+{% for b in umfang | groupby("betrieb") %}
+<p class="trefferzahl">{{ b.grouper }}</p>
+<div class="tabelle tabelle-breit">
+<table>
+  <thead>
+    <tr><th>Kultur</th>{% for j in jahre %}<th class="zahl {% if j == planjahr %}planung{% endif %}">{{ j }}</th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+    {% for k in b.list | groupby("kultur") %}
+    {% set je_jahr = {} %}
+    {% for z in k.list %}{% set _ = je_jahr.update({z.jahr: z.ha}) %}{% endfor %}
+    <tr>
+      <td>{{ k.grouper }}</td>
+      {% for j in jahre %}<td class="zahl {% if j == planjahr %}planung{% endif %}">{{ je_jahr.get(j) | ha }}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td>Summe</td>
+      {% for j in jahre %}<td class="zahl">{{ b.list | selectattr("jahr", "equalto", j) | map(attribute="ha") | select | sum | ha }}</td>{% endfor %}
+    </tr>
+  </tfoot>
+</table>
+</div>
+{% endfor %}
+{% else %}
+<p class="hinweis">Noch kein Anbau erfasst.</p>
+{% endif %}
+{% endblock %}

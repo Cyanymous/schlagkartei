@@ -246,6 +246,13 @@ form.formzeile label {
   color: var(--muted);
 }
 
+form.formzeile.kompakt label.checkbox {
+  padding-bottom: 0;
+  text-transform: none;
+  font-size: 0.9rem;
+  font-weight: normal;
+}
+
 form.formzeile label.checkbox {
   flex-direction: row;
   align-items: center;
@@ -451,6 +458,102 @@ table.klickbar a.zeilenlink::after {
 
 table.klickbar tbody tr:hover a.zeilenlink {
   text-decoration: underline;
+}
+
+/* Anbauplan */
+
+h2.abschnitt {
+  margin-top: 2rem;
+}
+
+.anbauplan td.zelle {
+  padding: 0;
+  min-width: 7.5rem;
+}
+
+.anbauplan a.zellenlink {
+  display: block;
+  min-height: 3rem;
+  padding: 0.5rem 0.6rem;
+  color: var(--text);
+}
+
+.anbauplan a.zellenlink:hover {
+  background: var(--accent-bg);
+  text-decoration: none;
+}
+
+.anbauplan .schlagspalte {
+  white-space: nowrap;
+}
+
+.anbauplan .schlagspalte small {
+  display: block;
+  color: var(--muted);
+}
+
+.anbau {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.anbau-hauptkultur {
+  font-weight: 600;
+}
+
+.anbau small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.leer-zelle {
+  color: var(--border);
+  font-size: 1.2rem;
+}
+
+th.planung,
+td.planung {
+  background: var(--chip-mittel-bg);
+}
+
+td.wiederholt {
+  box-shadow: inset 3px 0 0 var(--chip-mittel-text);
+}
+
+.warnung {
+  color: var(--chip-mittel-text);
+}
+
+.planung-badge {
+  background: var(--chip-mittel-bg);
+  color: var(--chip-mittel-text);
+}
+
+.anbau-eintrag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.anbau-eintrag:last-child {
+  border-bottom: none;
+}
+
+.anbau-eintrag form.formzeile {
+  margin: 0;
+  flex: 1 1 30rem;
+}
+
+form.formzeile label.breit {
+  flex: 1 1 16rem;
+}
+
+/* Breite Tabellen (Anbauplan) dürfen immer seitlich scrollen. */
+.tabelle-breit {
+  overflow-x: auto;
 }
 
 /* Etiketten */

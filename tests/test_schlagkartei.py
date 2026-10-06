@@ -103,3 +103,48 @@ def test_letzter_stand_kann_nicht_geloescht_werden(conn):
     schlag_id, _ = sk.create_schlag(conn, "Hof", "Acker", 2020, "1", 1.0)
     stand_id = sk.get_staende(conn, schlag_id)[0]["id"]
     assert sk.delete_stand(conn, stand_id) is not None
+
+
+# --- Anbau ---
+
+
+def test_fruchtfolge_hinweis_bei_wiederholter_hauptkultur(conn):
+    schlag_id, _ = sk.create_schlag(conn, "Hof", "Acker", 2020, "1", 2.0)
+    weizen = _kultur_id(conn, "Winterweizen")
+    sk.add_anbau(conn, schlag_id, 2024, 2027, weizen, "Hauptkultur", "")
+    sk.add_anbau(conn, schlag_id, 2025, 2027, weizen, "Hauptkultur", "")
+    sk.add_anbau(conn, schlag_id, 2025, 2027, _kultur_id(conn, "Phacelia"), "Zwischenfrucht", "")
+    sk.add_anbau(conn, schlag_id, 2026, 2027, _kultur_id(conn, "Phacelia"), "Hauptkultur", "")
+
+    wiederholt = sk.wiederholte_hauptkultur(sk.anbau_matrix(sk.get_anbau(conn)))
+    # Zwischenfrucht im Vorjahr zählt nicht als Wiederholung
+    assert wiederholt == {(schlag_id, 2025)}
+
+
+def test_kein_fruchtfolge_hinweis_bei_mehrjaehriger_kultur(conn):
+    schlag_id, _ = sk.create_schlag(conn, "Hof", "Spargelfeld", 2020, "1", 1.0)
+    spargel = _kultur_id(conn, "Spargel")
+    for jahr in (2024, 2025, 2026):
+        sk.add_anbau(conn, schlag_id, jahr, 2027, spargel, "Hauptkultur", "")
+    assert sk.wiederholte_hauptkultur(sk.anbau_matrix(sk.get_anbau(conn))) == set()
+
+
+def test_anbau_nur_bis_zum_planungsjahr(conn):
+    schlag_id, _ = sk.create_schlag(conn, "Hof", "Acker", 2020, "1", 2.0)
+    hafer = _kultur_id(conn, "Hafer")
+    assert sk.add_anbau(conn, schlag_id, 2028, 2027, hafer, "Hauptkultur", "") is not None
+    assert sk.add_anbau(conn, schlag_id, 2019, 2027, hafer, "Hauptkultur", "") is not None
+    assert sk.add_anbau(conn, schlag_id, 2027, 2027, hafer, "Hauptkultur", "") is None
+
+
+def test_anbauumfang_nutzt_groesse_des_jeweiligen_jahres(conn):
+    a, _ = sk.create_schlag(conn, "Hof", "Acker A", 2020, "1", 2.0)
+    sk.save_stand(conn, a, 2025, "1", 2.5)
+    b, _ = sk.create_schlag(conn, "Hof", "Acker B", 2020, "2", 1.0)
+    hafer = _kultur_id(conn, "Hafer")
+    for jahr in (2024, 2025):
+        sk.add_anbau(conn, a, jahr, 2027, hafer, "Hauptkultur", "")
+        sk.add_anbau(conn, b, jahr, 2027, hafer, "Hauptkultur", "")
+
+    umfang = {(r["jahr"], r["kultur"]): r["ha"] for r in sk.anbauumfang(conn)}
+    assert umfang == {(2024, "Hafer"): 3.0, (2025, "Hafer"): 3.5}

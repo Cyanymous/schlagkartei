@@ -5,11 +5,13 @@
 <p class="einleitung">
   Zuordnung Kultur → <a href="https://gd.eppo.int" target="_blank" rel="noopener">EPPO-Code</a>.
   Kulturen aus den PSM-DOK-Exporten werden beim Import automatisch ergänzt.
+  Mehrjährige Kulturen (z. B. Spargel) lösen im Anbauplan keinen Fruchtfolge-Hinweis aus.
 </p>
 
 <form class="karte formzeile" method="post" action="/kulturen">
   <label>Name <input name="name" required></label>
   <label>EPPO-Code <input name="eppo_code" maxlength="6" size="8" class="code"></label>
+  <label class="checkbox"><input type="checkbox" name="mehrjaehrig" value="1"> mehrjährig</label>
   <button type="submit">Kultur anlegen</button>
 </form>
 
@@ -24,6 +26,7 @@
         <form class="formzeile kompakt" method="post" action="/kulturen/{{ k.id }}">
           <input name="name" value="{{ k.name }}" required aria-label="Name" autofocus>
           <input name="eppo_code" value="{{ k.eppo_code or '' }}" maxlength="6" size="8" class="code" aria-label="EPPO-Code">
+          <label class="checkbox"><input type="checkbox" name="mehrjaehrig" value="1" {% if k.mehrjaehrig %}checked{% endif %}> mehrjährig</label>
           <button type="submit">Speichern</button>
           <a href="/kulturen">Abbrechen</a>
         </form>
@@ -36,7 +39,7 @@
     </tr>
     {% else %}
     <tr>
-      <td>{{ k.name }}</td>
+      <td>{{ k.name }}{% if k.mehrjaehrig %} <span class="badge">mehrjährig</span>{% endif %}</td>
       <td>{% if k.eppo_code %}<a class="code" href="https://gd.eppo.int/taxon/{{ k.eppo_code }}" target="_blank" rel="noopener" title="In der EPPO-Datenbank ansehen">{{ k.eppo_code }}</a>{% else %}–{% endif %}</td>
       <td class="zahl">{% if k.verwendet %}{{ k.verwendet }}×{% endif %}</td>
       <td class="aktion"><a href="/kulturen?bearbeiten={{ k.id }}#k{{ k.id }}" id="k{{ k.id }}">bearbeiten</a></td>

@@ -18,10 +18,13 @@ CREATE TABLE schlag_staende (
     UNIQUE (schlag_id, ab_jahr)
 );
 
+-- mehrjaehrig: Dauerkulturen wie Spargel stehen gewollt mehrere Jahre auf
+-- demselben Schlag; für sie gibt es keinen Fruchtfolge-Hinweis.
 CREATE TABLE kulturen (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
-    eppo_code TEXT
+    eppo_code TEXT,
+    mehrjaehrig INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE anbau (
@@ -84,3 +87,5 @@ INSERT INTO kulturen (name, eppo_code) VALUES
     ('Weißer Senf', 'SINAL'),
     ('Phacelia', 'PHCTA'),
     ('Ölrettich', 'RAPSO');
+
+UPDATE kulturen SET mehrjaehrig = 1 WHERE name IN ('Spargel', 'Luzerne');
