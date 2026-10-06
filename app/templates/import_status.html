@@ -3,10 +3,11 @@
 {% block content %}
 <h1>Import-Status</h1>
 
-<form method="post" action="/import">
+<form method="post" action="/import" class="import">
   <button type="submit">Jetzt importieren</button>
 </form>
 
+<div class="tabelle">
 <table>
   <thead>
     <tr><th>Datei</th><th>Importiert am</th><th>Datensätze</th><th>Status</th><th>Fehler</th></tr>
@@ -17,12 +18,13 @@
       <td>{{ d.dateiname }}</td>
       <td>{{ d.importiert_am | ortszeit }}</td>
       <td>{{ d.anzahl_datensaetze }}</td>
-      <td class="status-{{ d.status }}">{{ d.status }}</td>
+      <td><span class="badge status-{{ d.status }}">{{ d.status }}</span></td>
       <td>{{ d.fehlermeldung or "" }}</td>
     </tr>
     {% else %}
-    <tr><td colspan="5">Noch keine Dateien importiert.</td></tr>
+    <tr><td colspan="5" class="leer">Noch keine Dateien importiert.</td></tr>
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

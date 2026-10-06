@@ -110,3 +110,10 @@ def test_notiz_speichern_anzeigen_und_loeschen(client):
     r = client.post(f"{link}/notiz", data={"text": "  "})
     assert "Wind aus West" not in r.text
     assert "Notiz vorhanden" not in client.get("/").text
+
+
+def test_uebersicht_zeigt_deutsches_datum_und_trefferzahl(client):
+    r = client.get("/")
+    assert "04.05.2026" in r.text
+    assert "2026-05-04" not in _tabellenzeilen(r.text)
+    assert "2 Anwendungen" in r.text

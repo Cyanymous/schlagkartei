@@ -51,7 +51,17 @@ def _ortszeit(wert: str | None) -> str:
     return datetime.fromisoformat(wert).astimezone().strftime("%d.%m.%Y %H:%M")
 
 
+def _datum_de(wert: str | None) -> str:
+    if not wert:
+        return ""
+    try:
+        return datetime.strptime(wert, "%Y-%m-%d").strftime("%d.%m.%Y")
+    except ValueError:
+        return wert
+
+
 templates.env.filters["ortszeit"] = _ortszeit
+templates.env.filters["datum_de"] = _datum_de
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -133,7 +143,14 @@ def export_csv(request: Request) -> StreamingResponse:
     writer.writerow(["Datum", "Betrieb", "Kultur", "Schlag", "Mittel", "Anwender"])
     for r in rows:
         writer.writerow(
-            [r["datum"], r["betrieb"], r["kulturen"] or "", r["schlaege"] or "", r["mittel"] or "", r["anwender"] or ""]
+            [
+                r["datum"],
+                r["betrieb"],
+                ", ".join(r["kulturen"]),
+                ", ".join(r["schlaege"]),
+                ", ".join(r["mittel"]),
+                r["anwender"] or "",
+            ]
         )
     puffer.seek(0)
     return StreamingResponse(

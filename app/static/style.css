@@ -1,15 +1,65 @@
+/* Alle Farben als Variablen: der Dunkelmodus unten tauscht nur diese Werte. */
 :root {
-  --bg: #f6f7f3;
+  --bg: #f4f6f1;
   --surface: #ffffff;
-  --text: #212b1f;
-  --muted: #5c6b58;
-  --border: #d9ddd3;
-  --primary: #3c7a3e;
-  --primary-dark: #2c5c2e;
+  --surface-alt: #f8faf6;
+  --text: #1f2a1d;
+  --muted: #637060;
+  --border: #e1e5dc;
+  --primary: #2f6f3a;
+  --primary-dark: #24562c;
   --primary-contrast: #ffffff;
-  --accent-bg: #eaf3e6;
-  --error: #a4393a;
+  --topbar-bg: #2f6f3a;
+  --topbar-text: #ffffff;
+  --accent-bg: #ebf4e7;
+  --hover: #f1f7ee;
+  --error: #b03a3b;
   --error-bg: #fbeaea;
+  --ok-bg: #e3f1df;
+  --chip-bg: #eef1ea;
+  --chip-mittel-bg: #fdf3dc;
+  --chip-mittel-text: #7a5410;
+  --betrieb-0-bg: #dcefd8;
+  --betrieb-0-text: #24562c;
+  --betrieb-1-bg: #dbe8f6;
+  --betrieb-1-text: #1f4a78;
+  --betrieb-2-bg: #efe2f3;
+  --betrieb-2-text: #5e2f6e;
+  --shadow: 0 1px 2px rgba(30, 45, 25, 0.06), 0 2px 8px rgba(30, 45, 25, 0.05);
+  --radius: 0.6rem;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141912;
+    --surface: #1c231a;
+    --surface-alt: #20281e;
+    --text: #e3e9de;
+    --muted: #9aa894;
+    --border: #2f392c;
+    --primary: #4f9a5a;
+    --primary-dark: #8fcf96;
+    --primary-contrast: #0f150e;
+    --topbar-bg: #1d3320;
+    --topbar-text: #e3e9de;
+    --accent-bg: #243224;
+    --hover: #232e21;
+    --error: #f08a8a;
+    --error-bg: #3a2020;
+    --ok-bg: #233a24;
+    --chip-bg: #2a3327;
+    --chip-mittel-bg: #3a3020;
+    --chip-mittel-text: #f0cf8a;
+    --betrieb-0-bg: #233a24;
+    --betrieb-0-text: #a6dcab;
+    --betrieb-1-bg: #1e2f42;
+    --betrieb-1-text: #a8c8ec;
+    --betrieb-2-bg: #36263b;
+    --betrieb-2-text: #ddb6e8;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -17,26 +67,28 @@
 }
 
 body {
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.45;
   margin: 0;
   background: var(--bg);
   color: var(--text);
 }
 
 main {
-  max-width: 70rem;
+  max-width: 76rem;
   margin: 0 auto;
   padding: 1.5rem 2rem 3rem;
 }
 
 h1 {
-  font-size: 1.4rem;
-  margin: 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 650;
+  margin: 1rem 0 1.25rem;
 }
 
 h2 {
-  font-size: 1.1rem;
-  margin-top: 2rem;
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
   color: var(--primary-dark);
 }
 
@@ -49,37 +101,84 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Kopfleiste */
+
 .topbar {
-  background: var(--primary);
-  color: var(--primary-contrast);
-  padding: 0.9rem 2rem;
+  background: var(--topbar-bg);
+  color: var(--topbar-text);
+  padding: 0.75rem 2rem;
   display: flex;
   align-items: center;
-  gap: 2rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  box-shadow: var(--shadow);
 }
 
 .topbar .brand {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.15rem;
+  letter-spacing: 0.01em;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 0.25rem;
 }
 
 .topbar nav a {
-  color: var(--primary-contrast);
-  margin-right: 1.2rem;
-  opacity: 0.9;
+  color: var(--topbar-text);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  opacity: 0.85;
 }
 
 .topbar nav a:hover {
   opacity: 1;
-  text-decoration: underline;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.topbar nav a.aktiv {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+/* Formulare */
+
+select, button, input, textarea {
+  font: inherit;
+}
+
+select {
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--text);
+  min-width: 8rem;
+}
+
+button {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 0.4rem;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.08);
 }
 
 form.filter {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 1rem 1.2rem;
-  margin-top: 1rem;
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -89,41 +188,28 @@ form.filter {
 form.filter label {
   display: flex;
   flex-direction: column;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--muted);
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
-select, button, input, textarea {
-  font: inherit;
-}
-
-select {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 0.35rem;
-  background: var(--surface);
+form.filter label select {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: normal;
   color: var(--text);
-}
-
-button {
-  padding: 0.45rem 1rem;
-  border: none;
-  border-radius: 0.35rem;
-  background: var(--primary);
-  color: var(--primary-contrast);
-  cursor: pointer;
-}
-
-button:hover {
-  background: var(--primary-dark);
+  font-size: 1rem;
 }
 
 form.filter a {
-  align-self: center;
-  padding: 0.45rem 0.9rem;
+  align-self: end;
+  padding: 0.5rem 0.95rem;
   border: 1px solid var(--primary);
-  border-radius: 0.35rem;
+  border-radius: 0.4rem;
+  font-weight: 600;
 }
 
 form.filter a:hover {
@@ -131,73 +217,244 @@ form.filter a:hover {
   text-decoration: none;
 }
 
-table {
-  border-collapse: collapse;
+form.import {
+  margin-bottom: 1rem;
+}
+
+form.notiz textarea {
+  display: block;
   width: 100%;
-  margin-top: 1.2rem;
-  background: var(--surface);
+  min-height: 12rem;
+  resize: vertical;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  overflow: hidden;
+  border-radius: 0.4rem;
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+form.notiz textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+form.notiz .hinweis {
+  margin-left: 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.trefferzahl {
+  margin: 1.25rem 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Tabellen */
+
+/* Seitliches Scrollen nur auf schmalen Bildschirmen: ein scrollender
+   Container würde sonst den stehenbleibenden Tabellenkopf verhindern. */
+.tabelle {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 60rem) {
+  .tabelle {
+    overflow-x: auto;
+  }
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
 }
 
 th, td {
-  padding: 0.55rem 0.8rem;
+  padding: 0.6rem 0.85rem;
   text-align: left;
+  vertical-align: top;
   border-bottom: 1px solid var(--border);
 }
 
 th {
-  background: var(--accent-bg);
-  color: var(--primary-dark);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.8rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-tbody tr:hover {
-  background: var(--accent-bg);
+th:first-child {
+  border-top-left-radius: var(--radius);
+}
+
+th:last-child {
+  border-top-right-radius: var(--radius);
 }
 
 tbody tr:last-child td {
   border-bottom: none;
 }
 
-.status-ok {
-  color: var(--primary-dark);
+tbody tr:hover {
+  background: var(--hover);
+}
+
+td.leer {
+  color: var(--muted);
+  text-align: center;
+  padding: 2rem;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* Ganze Zeile anklickbar: der Link im ersten Feld wird über die Zeile gespannt. */
+table.klickbar tbody tr {
+  position: relative;
+}
+
+table.klickbar a.zeilenlink {
   font-weight: 600;
+}
+
+table.klickbar a.zeilenlink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+table.klickbar tbody tr:hover a.zeilenlink {
+  text-decoration: underline;
+}
+
+/* Etiketten */
+
+.badge, .chip {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.chip {
+  margin: 0 0.25rem 0.25rem 0;
+  background: var(--chip-bg);
+}
+
+.chip-mittel {
+  background: var(--chip-mittel-bg);
+  color: var(--chip-mittel-text);
+  font-weight: 600;
+}
+
+.badge {
+  font-weight: 600;
+}
+
+.betrieb-0 { background: var(--betrieb-0-bg); color: var(--betrieb-0-text); }
+.betrieb-1 { background: var(--betrieb-1-bg); color: var(--betrieb-1-text); }
+.betrieb-2 { background: var(--betrieb-2-bg); color: var(--betrieb-2-text); }
+
+.status-ok {
+  background: var(--ok-bg);
+  color: var(--primary-dark);
 }
 
 .status-fehler {
+  background: var(--error-bg);
   color: var(--error);
-  font-weight: 600;
-}
-
-pre {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  overflow-x: auto;
-}
-
-form.notiz textarea {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 12rem;
-  resize: vertical;
-  margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 0.35rem;
-  background: var(--surface);
-  color: var(--text);
-}
-
-form.notiz .hinweis {
-  margin-left: 0.75rem;
-  color: var(--muted);
 }
 
 .notiz-marker {
   color: var(--primary);
+}
+
+/* Detailansicht */
+
+.karte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Tabellen in Karten brauchen keinen eigenen Rahmen. */
+.karte .tabelle {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.karte th {
+  background: transparent;
+}
+
+.steckbrief {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0;
+}
+
+.steckbrief .breit {
+  grid-column: 1 / -1;
+}
+
+.steckbrief dt {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.steckbrief dd {
+  margin: 0.15rem 0 0;
+  word-break: break-word;
+}
+
+details.karte summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+pre {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+}
+
+/* Tablet und Telefon */
+
+@media (max-width: 40rem) {
+  main {
+    padding: 1rem;
+  }
+
+  .topbar {
+    padding: 0.75rem 1rem;
+  }
+
+  form.filter label,
+  form.filter select {
+    width: 100%;
+  }
 }

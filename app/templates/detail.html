@@ -6,68 +6,88 @@
 {% else %}
 {% set a = daten.anwendung %}
 <p><a href="/">&larr; zurück zur Übersicht</a></p>
-<h1>Anwendung vom {{ a.datum }}{% if a.uhrzeit %} um {{ a.uhrzeit }}{% endif %}</h1>
+<h1>Anwendung vom {{ a.datum | datum_de }}{% if a.uhrzeit %} um {{ a.uhrzeit }}{% endif %}</h1>
 
-<table>
-  <tr><th>Betrieb</th><td>{{ a.betrieb }}</td></tr>
-  <tr><th>Quelle</th><td>{{ a.quelle }}</td></tr>
-  <tr><th>Anwender</th><td>{{ a.anwender }}</td></tr>
-  <tr><th>Verantwortlich</th><td>{{ a.verantwortlich }}</td></tr>
-  <tr><th>Art der Verwendung</th><td>{{ a.art_verwendung }}</td></tr>
-  <tr><th>Herkunftsdatei</th><td>{{ daten.import_datei }} ({{ a.json_name }})</td></tr>
-  <tr><th>Zuerst gesehen am</th><td>{{ a.zuerst_gesehen_am | ortszeit }}</td></tr>
-  {% if a.geaendert_am %}<tr><th>Geändert am</th><td>{{ a.geaendert_am | ortszeit }}</td></tr>{% endif %}
-</table>
+<section class="karte">
+  <dl class="steckbrief">
+    <div><dt>Betrieb</dt><dd>{{ a.betrieb }}</dd></div>
+    <div><dt>Anwender</dt><dd>{{ a.anwender or "–" }}</dd></div>
+    <div><dt>Verantwortlich</dt><dd>{{ a.verantwortlich or "–" }}</dd></div>
+    <div><dt>Art der Verwendung</dt><dd>{{ a.art_verwendung or "–" }}</dd></div>
+    <div><dt>Quelle</dt><dd>{{ a.quelle }}</dd></div>
+    <div><dt>Zuerst gesehen am</dt><dd>{{ a.zuerst_gesehen_am | ortszeit }}</dd></div>
+    {% if a.geaendert_am %}<div><dt>Geändert am</dt><dd>{{ a.geaendert_am | ortszeit }}</dd></div>{% endif %}
+    <div class="breit"><dt>Herkunftsdatei</dt><dd>{{ daten.import_datei }} ({{ a.json_name }})</dd></div>
+  </dl>
+</section>
 
-<h2>Notiz</h2>
-<form class="notiz" method="post" action="/anwendung/{{ a.id }}/notiz">
-  <textarea name="text" rows="10">{{ daten.notiz.text if daten.notiz else '' }}</textarea>
-  <div>
-    <button type="submit">Speichern</button>
-    {% if daten.notiz %}<span class="hinweis">zuletzt geändert {{ daten.notiz.geaendert_am | ortszeit }}</span>{% endif %}
+<section class="karte">
+  <h2>Notiz</h2>
+  <form class="notiz" method="post" action="/anwendung/{{ a.id }}/notiz">
+    <textarea name="text" rows="10">{{ daten.notiz.text if daten.notiz else '' }}</textarea>
+    <div>
+      <button type="submit">Speichern</button>
+      {% if daten.notiz %}<span class="hinweis">zuletzt geändert {{ daten.notiz.geaendert_am | ortszeit }}</span>{% endif %}
+    </div>
+  </form>
+</section>
+
+<section class="karte">
+  <h2>Kulturen</h2>
+  <div class="tabelle">
+  <table>
+    <thead><tr><th>Name</th><th>EPPO-Code</th><th>BBCH</th><th>Satzweise</th></tr></thead>
+    <tbody>
+      {% for k in daten.kulturen %}
+      <tr><td>{{ k.name }}</td><td>{{ k.eppo_code }}</td><td>{{ k.bbch_code or '' }}{% if k.bbch_code and k.bbch_name %} – {% endif %}{{ k.bbch_name or '' }}</td><td>{{ k.satzweise }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
   </div>
-</form>
+</section>
 
-<h2>Kulturen</h2>
-<table>
-  <thead><tr><th>Name</th><th>EPPO-Code</th><th>BBCH</th><th>Satzweise</th></tr></thead>
-  <tbody>
-    {% for k in daten.kulturen %}
-    <tr><td>{{ k.name }}</td><td>{{ k.eppo_code }}</td><td>{{ k.bbch_code or '' }}{% if k.bbch_code and k.bbch_name %} – {% endif %}{{ k.bbch_name or '' }}</td><td>{{ k.satzweise }}</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+<section class="karte">
+  <h2>Flächen</h2>
+  <div class="tabelle">
+  <table>
+    <thead><tr><th>Name</th><th>Bereich</th><th>Lage</th><th>Umfang</th></tr></thead>
+    <tbody>
+      {% for e in daten.einsatzorte %}
+      <tr><td>{{ e.name }}</td><td>{{ e.anwendungsbereich }}</td><td>{{ e.geo_typ }}: {{ e.geo_wert }}</td><td class="nowrap">{{ e.flaeche_volumen }} {{ e.einheit }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
 
-<h2>Flächen</h2>
-<table>
-  <thead><tr><th>Name</th><th>Bereich</th><th>Lage</th><th>Umfang</th></tr></thead>
-  <tbody>
-    {% for e in daten.einsatzorte %}
-    <tr><td>{{ e.name }}</td><td>{{ e.anwendungsbereich }}</td><td>{{ e.geo_typ }}: {{ e.geo_wert }}</td><td>{{ e.flaeche_volumen }} {{ e.einheit }}</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<h2>Mittel</h2>
-<table>
-  <thead><tr><th>Name</th><th>Zulassungsnr.</th><th>Menge</th><th>Wirkstoffe</th><th>Bienen</th></tr></thead>
-  <tbody>
-    {% for m in daten.mittel %}
-    <tr><td>{{ m.name }}</td><td>{{ m.zulassungsnr }}</td><td>{{ m.aufwand_menge }} {{ m.aufwand_einheit }}</td><td>{{ m.wirkstoffe }}</td><td>{{ m.bienen }}</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+<section class="karte">
+  <h2>Mittel</h2>
+  <div class="tabelle">
+  <table>
+    <thead><tr><th>Name</th><th>Zulassungsnr.</th><th>Menge</th><th>Wirkstoffe</th><th>Bienen</th></tr></thead>
+    <tbody>
+      {% for m in daten.mittel %}
+      <tr><td>{{ m.name }}</td><td>{{ m.zulassungsnr }}</td><td class="nowrap">{{ m.aufwand_menge }} {{ m.aufwand_einheit }}</td><td>{{ m.wirkstoffe }}</td><td>{{ m.bienen }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
 
 {% if daten.zusatzstoffe %}
-<h2>Zusatzstoffe</h2>
-<ul>
-  {% for z in daten.zusatzstoffe %}
-  <li><code>{{ z.roh_json }}</code></li>
-  {% endfor %}
-</ul>
+<section class="karte">
+  <h2>Zusatzstoffe</h2>
+  <ul>
+    {% for z in daten.zusatzstoffe %}
+    <li><code>{{ z.roh_json }}</code></li>
+    {% endfor %}
+  </ul>
+</section>
 {% endif %}
 
-<h2>Original-Datensatz</h2>
-<pre>{{ a.roh_json }}</pre>
+<details class="karte">
+  <summary>Original-Datensatz</summary>
+  <pre>{{ a.roh_json }}</pre>
+</details>
 {% endif %}
 {% endblock %}

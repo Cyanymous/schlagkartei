@@ -9,9 +9,10 @@
 <body>
   <header class="topbar">
     <span class="brand">Schlagkartei</span>
+    {% set pfad = request.url.path %}
     <nav>
-      <a href="/">Übersicht</a>
-      <a href="/import">Import-Status</a>
+      <a href="/" {% if pfad == "/" or pfad.startswith("/anwendung") %}class="aktiv"{% endif %}>Übersicht</a>
+      <a href="/import" {% if pfad.startswith("/import") %}class="aktiv"{% endif %}>Import-Status</a>
     </nav>
   </header>
   <main>

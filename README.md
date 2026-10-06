@@ -36,11 +36,13 @@ derselben Dateien erzeugt keine Duplikate.
   zuerst. Über das Formular lässt sich nach Jahr, Betrieb, Schlag, Kultur
   und Mittel filtern; die Auswahl steht in der URL, eine gefilterte
   Ansicht lässt sich also als Lesezeichen speichern oder verschicken.
-- **Datum anklicken** öffnet die Detailansicht einer Anwendung mit allen
+- **Zeile anklicken** öffnet die Detailansicht einer Anwendung mit allen
   Feldern, der Herkunftsdatei und dem unveränderten Original-Datensatz.
 - **Notiz**: In der Detailansicht kannst du zu jeder Anwendung eine Notiz
   schreiben und mit „Speichern“ sichern. Leer speichern löscht sie.
   Anwendungen mit Notiz tragen in der Übersicht ein ✎ neben dem Datum.
+- **Dunkelmodus**: Die Oberfläche folgt automatisch der Hell/Dunkel-Einstellung
+  des Geräts.
 - **CSV-Export**: Der Link neben dem Filter-Formular exportiert genau die
   aktuell gefilterte Ansicht als `;`-getrennte CSV-Datei (UTF-8, öffnet
   direkt in Excel/LibreOffice mit deutscher Einstellung).
