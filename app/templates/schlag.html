@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ schlag.name if schlag else "Schlag" }} – Schlagkartei{% endblock %}
+{% block content %}
+{% if not schlag %}
+<p>Schlag nicht gefunden.</p>
+{% else %}
+<p><a href="/schlaege">&larr; alle Schläge</a></p>
+<h1>{{ schlag.name }}{% if not schlag.aktiv %} <span class="badge">inaktiv</span>{% endif %}</h1>
+
+<section class="karte">
+  <dl class="steckbrief">
+    <div><dt>Betrieb</dt><dd>{{ schlag.betrieb }}</dd></div>
+    <div><dt>Schlagnummer {{ jahr }}</dt><dd>{{ schlag.schlagnummer or "–" }}</dd></div>
+    <div><dt>Größe {{ jahr }}</dt><dd>{{ schlag.groesse_ha | ha }} ha</dd></div>
+  </dl>
+</section>
+
+<section class="karte">
+  <h2>Schlagnummer und Größe je Jahr</h2>
+  <p class="hinweis">Ein Stand gilt ab seinem Jahr, bis ein neuerer eingetragen ist.
+    Ein Stand für ein bereits eingetragenes Jahr überschreibt diesen.</p>
+  <div class="tabelle">
+  <table>
+    <thead><tr><th>ab Jahr</th><th>Schlagnummer</th><th class="zahl">Größe (ha)</th><th></th></tr></thead>
+    <tbody>
+      {% for st in staende %}
+      <tr>
+        <td>{{ st.ab_jahr }}</td>
+        <td>{{ st.schlagnummer }}</td>
+        <td class="zahl">{{ st.groesse_ha | ha }}</td>
+        <td>
+          {% if staende | length > 1 %}
+          <form method="post" action="/schlaege/{{ schlag.id }}/staende/{{ st.id }}/loeschen">
+            <button type="submit" class="knopf-gefahr">Löschen</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <form class="formzeile" method="post" action="/schlaege/{{ schlag.id }}/staende">
+    <label>ab Jahr <input name="ab_jahr" type="number" value="{{ jahr }}" min="2020" size="6"></label>
+    <label>Schlagnummer <input name="schlagnummer" required size="8" value="{{ schlag.schlagnummer or '' }}"></label>
+    <label>Größe (ha) <input name="groesse_ha" inputmode="decimal" size="8" value="{{ schlag.groesse_ha | ha }}"></label>
+    <button type="submit">Stand speichern</button>
+  </form>
+</section>
+
+<details class="karte">
+  <summary>Name, Betrieb und Status bearbeiten</summary>
+  <form class="formzeile" method="post" action="/schlaege/{{ schlag.id }}">
+    <label>Name <input name="name" value="{{ schlag.name }}" required></label>
+    <label>Betrieb <input name="betrieb" value="{{ schlag.betrieb }}" list="betriebe" required></label>
+    <label class="checkbox"><input type="checkbox" name="aktiv" value="1" {% if schlag.aktiv %}checked{% endif %}> aktiv</label>
+    <button type="submit">Speichern</button>
+  </form>
+  <datalist id="betriebe">
+    {% for b in betriebe %}<option value="{{ b }}">{% endfor %}
+  </datalist>
+  <p class="hinweis">Schläge werden nicht gelöscht, sondern auf inaktiv gesetzt; so bleiben
+    Fruchtfolge und Feldarbeiten erhalten.</p>
+</details>
+{% endif %}
+{% endblock %}

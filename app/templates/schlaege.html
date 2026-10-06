@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Schläge – Schlagkartei{% endblock %}
+{% block content %}
+<h1>Schläge</h1>
+
+<details class="karte" {% if not schlaege %}open{% endif %}>
+  <summary>Neuen Schlag anlegen</summary>
+  <form class="formzeile" method="post" action="/schlaege">
+    <label>Betrieb
+      <input name="betrieb" list="betriebe" required>
+    </label>
+    <label>Name <input name="name" required placeholder="z. B. Hinterm Hof"></label>
+    <label>Schlagnummer <input name="schlagnummer" required size="8"></label>
+    <label>Größe (ha) <input name="groesse_ha" inputmode="decimal" size="8"></label>
+    <label>gilt ab Jahr <input name="ab_jahr" type="number" value="{{ erstes_jahr }}" min="{{ erstes_jahr }}" size="6"></label>
+    <button type="submit">Anlegen</button>
+  </form>
+  <datalist id="betriebe">
+    {% for b in betriebe %}<option value="{{ b }}">{% endfor %}
+  </datalist>
+</details>
+
+<p class="trefferzahl">Schlagnummer und Größe Stand {{ jahr }}</p>
+<div class="tabelle">
+<table class="klickbar">
+  <thead><tr><th>Name</th><th>Betrieb</th><th>Schlagnummer</th><th class="zahl">Größe (ha)</th><th></th></tr></thead>
+  <tbody>
+    {% for s in schlaege %}
+    <tr {% if not s.aktiv %}class="inaktiv"{% endif %}>
+      <td><a class="zeilenlink" href="/schlaege/{{ s.id }}">{{ s.name }}</a></td>
+      <td>{{ s.betrieb }}</td>
+      <td>{{ s.schlagnummer or "–" }}</td>
+      <td class="zahl">{{ s.groesse_ha | ha }}</td>
+      <td>{% if not s.aktiv %}<span class="badge">inaktiv</span>{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="leer">Noch keine Schläge angelegt.</td></tr>
+    {% endfor %}
+  </tbody>
+  {% if schlaege %}
+  <tfoot>
+    {% for b in schlaege | selectattr("aktiv") | groupby("betrieb") %}
+    <tr><td colspan="3">Summe aktive Schläge {{ b.grouper }}</td><td class="zahl">{{ b.list | map(attribute="groesse_ha") | select | sum | ha }}</td><td></td></tr>
+    {% endfor %}
+  </tfoot>
+  {% endif %}
+</table>
+</div>
+{% endblock %}

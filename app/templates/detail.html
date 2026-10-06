@@ -5,7 +5,7 @@
 <p>Anwendung nicht gefunden.</p>
 {% else %}
 {% set a = daten.anwendung %}
-<p><a href="/">&larr; zurück zur Übersicht</a></p>
+<p><a href="/">&larr; zurück zum Pflanzenschutz</a></p>
 <h1>Anwendung vom {{ a.datum | datum_de }}{% if a.uhrzeit %} um {{ a.uhrzeit }}{% endif %}</h1>
 
 <section class="karte">

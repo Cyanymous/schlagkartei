@@ -1,0 +1,105 @@
+import json
+import shutil
+import zipfile
+from pathlib import Path
+
+import pytest
+
+from app import schlagkartei as sk
+from app.db import connect
+from app.importer import import_exports
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
+def conn():
+    c = connect(":memory:")
+    yield c
+    c.close()
+
+
+def _kultur_id(conn, name):
+    return conn.execute("SELECT id FROM kulturen WHERE name = ?", (name,)).fetchone()[0]
+
+
+# --- Kulturen ---
+
+
+def test_kulturen_sind_vorbelegt(conn):
+    assert conn.execute("SELECT eppo_code FROM kulturen WHERE name = 'Winterweizen'").fetchone()[0] == "TRZAW"
+
+
+def _import_mit_kultur(tmp_path, conn, name, eppo_code):
+    export_dir = tmp_path / "exports"
+    export_dir.mkdir()
+    with zipfile.ZipFile(FIXTURES / "2026-05-04-Benevia.zip") as zf:
+        record = json.loads(zf.read(next(n for n in zf.namelist() if n.endswith(".json"))))
+    record["guid"] = "test-" + name
+    record["kulturen"][0]["name"] = name
+    record["kulturen"][0]["eppoCode"] = eppo_code
+    (export_dir / "x.json").write_text(json.dumps(record))
+    import_exports(str(export_dir), conn)
+    sk.kulturen_aus_import_uebernehmen(conn)
+
+
+def test_neue_kultur_aus_import_wird_uebernommen(tmp_path, conn):
+    _import_mit_kultur(tmp_path, conn, "Hopfen", "HUMLU")
+    assert conn.execute("SELECT eppo_code FROM kulturen WHERE name = 'Hopfen'").fetchone()[0] == "HUMLU"
+
+
+def test_import_erzeugt_keine_dublette_bei_bekanntem_eppo_code(tmp_path, conn):
+    _import_mit_kultur(tmp_path, conn, "Bleichspargel", "ASPOF")
+    assert conn.execute("SELECT COUNT(*) FROM kulturen WHERE eppo_code = 'ASPOF'").fetchone()[0] == 1
+
+
+def test_import_ueberschreibt_eigene_kultur_nicht(tmp_path, conn):
+    conn.execute("UPDATE kulturen SET eppo_code = 'XXXXX' WHERE name = 'Spargel'")
+    _import_mit_kultur(tmp_path, conn, "Spargel", "ASPOF")
+    assert conn.execute("SELECT eppo_code FROM kulturen WHERE name = 'Spargel'").fetchone()[0] == "XXXXX"
+
+
+def test_verwendete_kultur_kann_nicht_geloescht_werden(conn):
+    schlag_id, _ = sk.create_schlag(conn, "Hof", "Acker", 2020, "1", 2.0)
+    kultur = _kultur_id(conn, "Hafer")
+    conn.execute(
+        "INSERT INTO anbau (schlag_id, jahr, kultur_id, art) VALUES (?, 2024, ?, 'Hauptkultur')",
+        (schlag_id, kultur),
+    )
+    assert sk.delete_kultur(conn, kultur) is not None
+    assert sk.delete_kultur(conn, _kultur_id(conn, "Sorghum")) is None
+
+
+# --- Schläge und Stände ---
+
+
+def test_stand_gilt_bis_zum_naechsten_stand(conn):
+    schlag_id, fehler = sk.create_schlag(conn, "Hof", "Hinterm Hof", 2020, "22", 3.5)
+    assert fehler is None
+    sk.save_stand(conn, schlag_id, 2024, "22a", 3.1)
+
+    assert sk.get_schlag(conn, schlag_id, 2023)["schlagnummer"] == "22"
+    assert sk.get_schlag(conn, schlag_id, 2024)["schlagnummer"] == "22a"
+    assert sk.get_schlag(conn, schlag_id, 2026)["groesse_ha"] == 3.1
+
+
+def test_schlagnummer_ist_je_jahr_eindeutig(conn):
+    sk.create_schlag(conn, "Hof", "Acker A", 2020, "5", 1.0)
+    _, fehler = sk.create_schlag(conn, "Hof", "Acker B", 2022, "5", 1.0)
+    assert fehler and "Acker A" in fehler
+
+
+def test_schlag_fuer_nummer_beachtet_das_jahr(conn):
+    a, _ = sk.create_schlag(conn, "Hof", "Acker A", 2020, "7", 1.0)
+    sk.save_stand(conn, a, 2025, "70", 1.0)
+    b, _ = sk.create_schlag(conn, "Hof", "Acker B", 2025, "7", 1.0)
+
+    assert sk.schlag_fuer_nummer(conn, "7", 2024) == a
+    assert sk.schlag_fuer_nummer(conn, "7", 2025) == b
+    assert sk.schlag_fuer_nummer(conn, "70", 2026) == a
+
+
+def test_letzter_stand_kann_nicht_geloescht_werden(conn):
+    schlag_id, _ = sk.create_schlag(conn, "Hof", "Acker", 2020, "1", 1.0)
+    stand_id = sk.get_staende(conn, schlag_id)[0]["id"]
+    assert sk.delete_stand(conn, stand_id) is not None

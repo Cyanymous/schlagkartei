@@ -11,11 +11,18 @@
     <span class="brand">Schlagkartei</span>
     {% set pfad = request.url.path %}
     <nav>
-      <a href="/" {% if pfad == "/" or pfad.startswith("/anwendung") %}class="aktiv"{% endif %}>Übersicht</a>
-      <a href="/import" {% if pfad.startswith("/import") %}class="aktiv"{% endif %}>Import-Status</a>
+      <a href="/schlaege" {% if pfad.startswith("/schlaege") %}class="aktiv"{% endif %}>Schläge</a>
+      <a href="/anbauplan" {% if pfad.startswith("/anbauplan") %}class="aktiv"{% endif %}>Anbauplan</a>
+      <a href="/feldarbeiten" {% if pfad.startswith("/feldarbeiten") %}class="aktiv"{% endif %}>Feldarbeiten</a>
+      <a href="/" {% if pfad == "/" or pfad.startswith("/anwendung") %}class="aktiv"{% endif %}>Pflanzenschutz</a>
+      <a href="/kulturen" {% if pfad.startswith("/kulturen") %}class="aktiv"{% endif %}>Kulturen</a>
+      <a href="/import" {% if pfad.startswith("/import") %}class="aktiv"{% endif %}>Import</a>
     </nav>
   </header>
   <main>
+    {% if request.query_params.get("fehler") %}
+    <div class="meldung-fehler">{{ request.query_params.get("fehler") }}</div>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 </body>

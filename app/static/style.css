@@ -150,7 +150,7 @@ select, button, input, textarea {
   font: inherit;
 }
 
-select {
+select, input:not([type="checkbox"]) {
   padding: 0.4rem 0.55rem;
   border: 1px solid var(--border);
   border-radius: 0.4rem;
@@ -196,12 +196,110 @@ form.filter label {
   gap: 0.3rem;
 }
 
-form.filter label select {
+form.filter label select,
+form.formzeile label input,
+form.formzeile label select {
   text-transform: none;
   letter-spacing: normal;
   font-weight: normal;
   color: var(--text);
   font-size: 1rem;
+}
+
+button.knopf-zweit {
+  background: transparent;
+  color: var(--primary-dark);
+  border: 1px solid var(--primary);
+  padding: 0.35rem 0.8rem;
+}
+
+button.knopf-gefahr {
+  background: transparent;
+  color: var(--error);
+  border: 1px solid var(--error);
+  padding: 0.35rem 0.8rem;
+}
+
+button.knopf-zweit:hover,
+button.knopf-gefahr:hover {
+  background: var(--hover);
+  filter: none;
+}
+
+/* Formulare, deren Felder nebeneinander stehen (Beschriftung über dem Feld). */
+form.formzeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem 1rem;
+  margin: 0.75rem 0 0;
+}
+
+form.formzeile label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+form.formzeile label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  padding-bottom: 0.5rem;
+}
+
+form.formzeile.kompakt {
+  margin: 0;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+form.formzeile select,
+form.formzeile input {
+  min-width: 0;
+}
+
+td.aktion {
+  text-align: right;
+  white-space: nowrap;
+}
+
+tr.bearbeiten td {
+  background: var(--accent-bg);
+}
+
+tr.bearbeiten form + form {
+  margin-top: 0.5rem;
+}
+
+a.code,
+input.code {
+  text-transform: uppercase;
+  font-family: ui-monospace, monospace;
+}
+
+.meldung-fehler {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.einleitung,
+.hinweis {
+  color: var(--muted);
+}
+
+p.hinweis {
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem;
 }
 
 form.filter a {
@@ -309,6 +407,23 @@ tbody tr:hover {
   background: var(--hover);
 }
 
+td.zahl, th.zahl {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+tfoot td {
+  font-weight: 600;
+  background: var(--surface-alt);
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+}
+
+tr.inaktiv td {
+  color: var(--muted);
+}
+
 td.leer {
   color: var(--muted);
   text-align: center;
@@ -361,6 +476,7 @@ table.klickbar tbody tr:hover a.zeilenlink {
 
 .badge {
   font-weight: 600;
+  background: var(--chip-bg);
 }
 
 .betrieb-0 { background: var(--betrieb-0-bg); color: var(--betrieb-0-text); }
