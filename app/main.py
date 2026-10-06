@@ -1,8 +1,9 @@
 import csv
 import io
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -82,6 +83,19 @@ def detail(request: Request, application_id: int) -> HTMLResponse:
     finally:
         conn.close()
     return templates.TemplateResponse(request, "detail.html", {"daten": daten})
+
+
+@app.post("/anwendung/{application_id}/notiz")
+async def notiz_speichern(request: Request, application_id: int) -> RedirectResponse:
+    # Formular selbst auslesen statt FastAPIs Form(), das python-multipart bräuchte.
+    formular = parse_qs((await request.body()).decode("utf-8"))
+    text = formular.get("text", [""])[0]
+    conn = _get_conn()
+    try:
+        queries.save_notiz(conn, application_id, text, datetime.now(UTC).isoformat())
+    finally:
+        conn.close()
+    return RedirectResponse(f"/anwendung/{application_id}", status_code=303)
 
 
 @app.get("/import", response_class=HTMLResponse)

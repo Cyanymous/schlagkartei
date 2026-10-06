@@ -19,6 +19,15 @@
   {% if a.geaendert_am %}<tr><th>Geändert am</th><td>{{ a.geaendert_am | ortszeit }}</td></tr>{% endif %}
 </table>
 
+<h2>Notiz</h2>
+<form class="notiz" method="post" action="/anwendung/{{ a.id }}/notiz">
+  <textarea name="text" rows="4">{{ daten.notiz.text if daten.notiz else '' }}</textarea>
+  <div>
+    <button type="submit">Speichern</button>
+    {% if daten.notiz %}<span class="hinweis">zuletzt geändert {{ daten.notiz.geaendert_am | ortszeit }}</span>{% endif %}
+  </div>
+</form>
+
 <h2>Kulturen</h2>
 <table>
   <thead><tr><th>Name</th><th>EPPO-Code</th><th>BBCH</th><th>Satzweise</th></tr></thead>

@@ -42,7 +42,8 @@ def get_applications(conn: sqlite3.Connection, filters: dict) -> list[sqlite3.Ro
             (SELECT GROUP_CONCAT(DISTINCT e.name) FROM anwendung_einsatzorte e
              WHERE e.application_id = a.id) AS schlaege,
             (SELECT GROUP_CONCAT(DISTINCT m.name) FROM anwendung_mittel m
-             WHERE m.application_id = a.id) AS mittel
+             WHERE m.application_id = a.id) AS mittel,
+            EXISTS (SELECT 1 FROM notizen n WHERE n.datensatz_key = a.datensatz_key) AS hat_notiz
         FROM applications a
         WHERE {where}
         ORDER BY a.datum DESC, a.uhrzeit DESC, a.id DESC
@@ -81,8 +82,14 @@ def get_application_detail(conn: sqlite3.Connection, application_id: int) -> dic
         "SELECT dateiname FROM import_files WHERE id = ?", (anwendung["import_file_id"],)
     ).fetchone()
 
+    notiz = conn.execute(
+        "SELECT text, geaendert_am FROM notizen WHERE datensatz_key = ?",
+        (anwendung["datensatz_key"],),
+    ).fetchone()
+
     return {
         "anwendung": anwendung,
+        "notiz": notiz,
         "mittel": conn.execute(
             "SELECT * FROM anwendung_mittel WHERE application_id = ?", (application_id,)
         ).fetchall(),
@@ -97,6 +104,24 @@ def get_application_detail(conn: sqlite3.Connection, application_id: int) -> dic
         ).fetchall(),
         "import_datei": import_datei["dateiname"] if import_datei else None,
     }
+
+
+def save_notiz(conn: sqlite3.Connection, application_id: int, text: str, jetzt: str) -> None:
+    key = conn.execute(
+        "SELECT datensatz_key FROM applications WHERE id = ?", (application_id,)
+    ).fetchone()
+    if key is None:
+        return
+    if text.strip():
+        conn.execute(
+            """INSERT INTO notizen (datensatz_key, text, geaendert_am) VALUES (?, ?, ?)
+               ON CONFLICT (datensatz_key) DO UPDATE SET
+                   text = excluded.text, geaendert_am = excluded.geaendert_am""",
+            (key[0], text.strip(), jetzt),
+        )
+    else:
+        conn.execute("DELETE FROM notizen WHERE datensatz_key = ?", (key[0],))
+    conn.commit()
 
 
 def get_import_files(conn: sqlite3.Connection) -> list[sqlite3.Row]:

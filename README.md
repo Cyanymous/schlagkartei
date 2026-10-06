@@ -38,6 +38,9 @@ derselben Dateien erzeugt keine Duplikate.
   Ansicht lässt sich also als Lesezeichen speichern oder verschicken.
 - **Datum anklicken** öffnet die Detailansicht einer Anwendung mit allen
   Feldern, der Herkunftsdatei und dem unveränderten Original-Datensatz.
+- **Notiz**: In der Detailansicht kannst du zu jeder Anwendung eine Notiz
+  schreiben und mit „Speichern“ sichern. Leer speichern löscht sie.
+  Anwendungen mit Notiz tragen in der Übersicht ein ✎ neben dem Datum.
 - **CSV-Export**: Der Link neben dem Filter-Formular exportiert genau die
   aktuell gefilterte Ansicht als `;`-getrennte CSV-Datei (UTF-8, öffnet
   direkt in Excel/LibreOffice mit deutscher Einstellung).
@@ -45,6 +48,15 @@ derselben Dateien erzeugt keine Duplikate.
   Zeitpunkt, Anzahl Datensätzen und eventuellen Fehlern. Der Knopf „Jetzt
   importieren“ liest den `exports/`-Ordner erneut ein, ohne die App neu
   zu starten.
+
+## Datensicherung
+
+- `exports/` enthält die Original-Exporte – der rechtlich maßgebliche
+  Bestand. Unbedingt sichern.
+- `data/` enthält die Datenbank. Die importierten Daten ließen sich aus
+  `exports/` neu einlesen, **die Notizen aber nicht**. Deshalb `data/`
+  ebenfalls sichern. Ein Neustart oder Neubau des Containers lässt beide
+  Ordner unangetastet.
 
 ## Betriebszuordnung konfigurieren
 

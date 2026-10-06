@@ -1,6 +1,6 @@
 # Schlagkartei – Spezifikation
 
-Stand: 05.10.2026 · Status: Stufe 1 in Planung
+Stand: 06.10.2026 · Status: Stufe 1 umgesetzt
 
 ## 1. Ziel
 
@@ -28,9 +28,12 @@ weniger beweglichen Teilen.
 
 | Stufe | Inhalt | Status |
 |-------|--------|--------|
-| 1 | Import der PSM-DOK-Exporte, Gesamtübersicht mit Filtern, CSV-Export | **jetzt** |
-| 2 | Schlag-Stammdaten, Notizen, einfache Berechnungen | später |
+| 1 | Import der PSM-DOK-Exporte, Gesamtübersicht mit Filtern, CSV-Export, Notizen je Anwendung | **jetzt** |
+| 2 | Schlag-Stammdaten, einfache Berechnungen | später |
 | 3 | Eigene Eingabemaske als Ersatz für PSM-DOK (volle Schlagkartei) | später |
+
+Notizen je Anwendung wurden am 06.10.2026 auf Wunsch des Betreibers aus
+Stufe 2 in Stufe 1 vorgezogen.
 
 Es wird immer nur die aktuelle Stufe gebaut. Spätere Stufen beeinflussen das
 Datenmodell (siehe Abschnitt 5), aber es entsteht kein Code "auf Vorrat".
@@ -131,7 +134,7 @@ Diese drei Regeln gelten für alle Stufen und dürfen nicht aufgeweicht werden:
 
 1. **Exportdateien sind das unveränderliche Original.** Die App liest nur.
 2. **Importierte und eigene Daten liegen in getrennten Tabellen.** Eigene Daten
-   (ab Stufe 2) verweisen per Fremdschlüssel auf importierte Datensätze, werden
+   (ab Stufe 1 die Notizen) verweisen per Fremdschlüssel auf importierte Datensätze, werden
    aber nie in dieselbe Tabelle geschrieben. Der Import darf eigene Daten nie
    überschreiben.
 3. **Jede Anwendung trägt die Spalten `betrieb` und `quelle`.** `betrieb`
@@ -159,6 +162,10 @@ Diese drei Regeln gelten für alle Stufen und dürfen nicht aufgeweicht werden:
   nur mit `roh_json`, weil die Feldnamen in den Fixtures noch nicht belegt
   sind (siehe Abschnitt 11, letzter Absatz). Sobald ein Fixture mit Inhalt
   vorliegt, wird die Tabelle um konkrete Spalten erweitert.
+- `notizen` (eigene Daten): höchstens eine Notiz je Anwendung mit Text und
+  `geaendert_am`. Verweist über `datensatz_key` (die `guid` aus dem Export)
+  auf `applications`, nicht über die interne `id`, weil diese beim Neuaufbau
+  der Datenbank neu vergeben wird. Eine leer gespeicherte Notiz wird gelöscht.
 
 **Das konkrete Schema wird aus den Beispieldateien in `tests/fixtures/`
 abgeleitet, nicht geraten.** Felder, die PSM-DOK liefert, aber oben nicht genannt
@@ -194,7 +201,8 @@ Start in Reihenfolge angewendet werden (Stand über `PRAGMA user_version`).
   und Meldung in `import_files` vermerkt und in der Oberfläche angezeigt.
 - Da der importierte Teil vollständig aus dem Export-Ordner rekonstruierbar ist,
   muss "Datenbank löschen und neu importieren" jederzeit dasselbe Ergebnis
-  liefern.
+  liefern. Das gilt nur für die importierten Daten: Notizen gehen dabei
+  verloren (siehe Abschnitt 9, Backup).
 
 ## 7. Oberfläche in Stufe 1
 
@@ -205,7 +213,9 @@ Tablet gut lesbar.
    zuerst. Filter nach Jahr, Betrieb, Schlag, Kultur und Mittel; die Filter
    stehen in der URL, damit Ansichten als Lesezeichen funktionieren.
 2. **Detailansicht** einer Anwendung: alle Felder plus Herkunftsdatei und
-   Original-Datensatz.
+   Original-Datensatz, dazu ein Textfeld für die eigene Notiz. In der
+   Übersicht markiert ein Symbol Anwendungen mit Notiz. Notizen sind nicht
+   Teil des CSV-Exports.
 3. **Import-Status:** Liste der eingelesenen Dateien mit Zeitpunkt, Anzahl
    Datensätze und Fehlern; Knopf "Jetzt importieren".
 4. **CSV-Export** der aktuell gefilterten Ansicht (UTF-8, Semikolon als
@@ -245,8 +255,8 @@ CSV-Export enthält die gefilterten Zeilen.
   Frage 5); keine Zugangsdaten nötig
 - Update auf dem Server: `git pull && docker compose up -d --build`
 - Backup: `exports/` ist der rechtlich relevante Bestand und gehört in die
-  Serversicherung. `data/` wird ab Stufe 2 ebenfalls sicherungspflichtig, weil
-  dort dann eigene, nicht rekonstruierbare Daten liegen.
+  Serversicherung. Seit es Notizen gibt, gehört auch `data/` in die
+  Sicherung, weil dort eigene, nicht rekonstruierbare Daten liegen.
 
 ## 10. Abnahmekriterien für Stufe 1
 
@@ -255,7 +265,8 @@ CSV-Export enthält die gefilterten Zeilen.
 - [ ] Die Übersicht zeigt alle Anwendungen beider Betriebe und lässt sich nach
       Jahr, Betrieb, Schlag, Kultur und Mittel filtern
 - [ ] Wiederholter Import erzeugt keine Duplikate
-- [ ] Datenbank löschen und neu starten stellt denselben Stand wieder her
+- [ ] Datenbank löschen und neu starten stellt denselben Stand der importierten
+      Daten wieder her
 - [ ] CSV-Export der gefilterten Ansicht funktioniert
 - [ ] Die Exportdateien bleiben unverändert (Mount ist read-only)
 - [ ] Tests laufen grün

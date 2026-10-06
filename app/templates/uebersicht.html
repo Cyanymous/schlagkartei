@@ -57,7 +57,7 @@
   <tbody>
     {% for r in rows %}
     <tr>
-      <td><a href="/anwendung/{{ r.id }}">{{ r.datum }}</a></td>
+      <td><a href="/anwendung/{{ r.id }}">{{ r.datum }}</a>{% if r.hat_notiz %} <span class="notiz-marker" title="Notiz vorhanden">✎</span>{% endif %}</td>
       <td>{{ r.betrieb }}</td>
       <td>{{ r.kulturen }}</td>
       <td>{{ r.schlaege }}</td>

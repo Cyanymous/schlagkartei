@@ -167,3 +167,26 @@ def test_korrigierter_eintrag_aktualisiert_bestehende_zeile(conn, export_dir):
     assert nachher["uhrzeit"] == "22:00"
     assert nachher["zuerst_gesehen_am"] == vorher["zuerst_gesehen_am"]
     assert nachher["geaendert_am"] is not None
+
+
+def test_notiz_bleibt_bei_korrigiertem_reimport_erhalten(tmp_path):
+    from app.queries import save_notiz
+
+    export_dir = tmp_path / "exports"
+    export_dir.mkdir()
+    shutil.copy(FIXTURES / "2026-05-04-Benevia.zip", export_dir)
+    conn = connect(str(tmp_path / "db.sqlite"))
+    import_exports(str(export_dir), conn)
+    app_id = conn.execute("SELECT id FROM applications").fetchone()[0]
+    save_notiz(conn, app_id, "meine Notiz", "2026-10-06T08:00:00+00:00")
+
+    # Gleiche guid, geänderter Inhalt -> Importer aktualisiert die Anwendung.
+    with zipfile.ZipFile(FIXTURES / "2026-05-04-Benevia.zip") as zf:
+        name = next(n for n in zf.namelist() if n.endswith(".json"))
+        record = json.loads(zf.read(name))
+    record["anwendung"]["anwender"] = "Korrigiert"
+    (export_dir / "korrektur.json").write_text(json.dumps(record))
+    import_exports(str(export_dir), conn)
+
+    assert conn.execute("SELECT anwender FROM applications").fetchone()[0] == "Korrigiert"
+    assert conn.execute("SELECT text FROM notizen").fetchone()[0] == "meine Notiz"

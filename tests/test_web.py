@@ -92,3 +92,21 @@ def test_ortszeit_rechnet_utc_in_lokale_zeit_um(monkeypatch):
     finally:
         monkeypatch.undo()
         time.tzset()
+
+
+def _detail_link(client) -> str:
+    r = client.get("/", params={"mittel": "BENEVIA"})
+    return _tabellenzeilen(r.text).split('href="')[1].split('"')[0]
+
+
+def test_notiz_speichern_anzeigen_und_loeschen(client):
+    link = _detail_link(client)
+
+    r = client.post(f"{link}/notiz", data={"text": "Wind aus West, Wirkung gut"})
+    assert r.status_code == 200  # Redirect zurück auf die Detailseite
+    assert "Wind aus West, Wirkung gut" in r.text
+    assert "Notiz vorhanden" in client.get("/").text
+
+    r = client.post(f"{link}/notiz", data={"text": "  "})
+    assert "Wind aus West" not in r.text
+    assert "Notiz vorhanden" not in client.get("/").text

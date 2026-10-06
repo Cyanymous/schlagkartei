@@ -94,7 +94,7 @@ form.filter label {
   gap: 0.25rem;
 }
 
-select, button, input {
+select, button, input, textarea {
   font: inherit;
 }
 
@@ -177,4 +177,25 @@ pre {
   border-radius: 0.5rem;
   padding: 1rem;
   overflow-x: auto;
+}
+
+form.notiz textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
+form.notiz .hinweis {
+  margin-left: 0.75rem;
+  color: var(--muted);
+}
+
+.notiz-marker {
+  color: var(--primary);
 }
