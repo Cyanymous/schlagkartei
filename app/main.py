@@ -1,6 +1,7 @@
 import csv
 import io
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -40,6 +41,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
+
+def _ortszeit(wert: str | None) -> str:
+    # Gespeichert wird UTC; angezeigt in der Zeitzone aus TZ (compose.yaml).
+    if not wert:
+        return ""
+    return datetime.fromisoformat(wert).astimezone().strftime("%d.%m.%Y %H:%M")
+
+
+templates.env.filters["ortszeit"] = _ortszeit
 
 
 @app.get("/", response_class=HTMLResponse)

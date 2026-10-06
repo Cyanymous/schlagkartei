@@ -15,7 +15,7 @@
     {% for d in dateien %}
     <tr>
       <td>{{ d.dateiname }}</td>
-      <td>{{ d.importiert_am }}</td>
+      <td>{{ d.importiert_am | ortszeit }}</td>
       <td>{{ d.anzahl_datensaetze }}</td>
       <td class="status-{{ d.status }}">{{ d.status }}</td>
       <td>{{ d.fehlermeldung or "" }}</td>

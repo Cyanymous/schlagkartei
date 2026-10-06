@@ -10,3 +10,4 @@ services:
       - EXPORT_DIR=/exports
       - DB_PATH=/data/schlagkartei.db
       - BETRIEB_ZUORDNUNG=${BETRIEB_ZUORDNUNG:-}
+      - TZ=Europe/Berlin
