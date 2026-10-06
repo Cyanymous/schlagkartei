@@ -53,7 +53,13 @@
     <thead><tr><th>Name</th><th>Bereich</th><th>Lage</th><th>Umfang</th></tr></thead>
     <tbody>
       {% for e in daten.einsatzorte %}
-      <tr><td>{{ e.name }}</td><td>{{ e.anwendungsbereich }}</td><td>{{ e.geo_typ }}: {{ e.geo_wert }}</td><td class="nowrap">{{ e.flaeche_volumen }} {{ e.einheit }}</td></tr>
+      <tr>
+      <td>{{ e.name }}
+        {% set s = schlaege_zuordnung.get(e.geo_wert) if e.geo_typ == "Schlag-ID" else none %}
+        {% if s %}<br><a href="/schlaege/{{ s.id }}">→ Schlag {{ s.name }}</a>{% endif %}
+      </td>
+      <td>{{ e.anwendungsbereich }}</td><td>{{ e.geo_typ }}: {{ e.geo_wert }}</td><td class="nowrap">{{ e.flaeche_volumen }} {{ e.einheit }}</td>
+    </tr>
       {% endfor %}
     </tbody>
   </table>

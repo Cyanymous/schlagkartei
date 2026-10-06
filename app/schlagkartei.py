@@ -413,3 +413,62 @@ def hauptkultur_je_schlag(conn: sqlite3.Connection, jahr: int) -> dict[int, str]
         if e["jahr"] == jahr and e["art"] == "Hauptkultur":
             ergebnis[e["schlag_id"]] = (ergebnis.get(e["schlag_id"], "") + ", " + e["kultur"]).lstrip(", ")
     return ergebnis
+
+
+# --- Pflanzenschutz aus PSM-DOK je Schlag -----------------------------------
+
+
+def get_psm_anwendungen(conn: sqlite3.Connection, schlag_id: int) -> list[dict]:
+    """PSM-Anwendungen dieses Schlags aus dem Import.
+
+    Zuordnung über die Schlag-ID des Einsatzorts: Sie muss der Schlagnummer
+    entsprechen, die der Schlag im Jahr der Anwendung hatte (SPEC.md Abschnitt 12).
+    """
+    nummern = {st["schlagnummer"] for st in get_staende(conn, schlag_id)}
+    if not nummern:
+        return []
+    platzhalter = ",".join("?" * len(nummern))
+    kandidaten = conn.execute(
+        f"""SELECT DISTINCT a.id, a.datum, a.uhrzeit, a.jahr, a.anwender, e.geo_wert,
+               (SELECT json_group_array(json_object(
+                    'name', m.name, 'menge', m.aufwand_menge, 'einheit', m.aufwand_einheit))
+                FROM anwendung_mittel m WHERE m.application_id = a.id) AS mittel,
+               (SELECT json_group_array(DISTINCT k.name)
+                FROM anwendung_kulturen k WHERE k.application_id = a.id) AS kulturen
+           FROM applications a
+           JOIN anwendung_einsatzorte e ON e.application_id = a.id
+           WHERE e.geo_typ = 'Schlag-ID' AND e.geo_wert IN ({platzhalter})""",
+        sorted(nummern),
+    ).fetchall()
+    ergebnis = []
+    for row in kandidaten:
+        if schlag_fuer_nummer(conn, row["geo_wert"], row["jahr"]) != schlag_id:
+            continue
+        zeile = dict(row)
+        zeile["mittel"] = json.loads(zeile["mittel"])
+        zeile["kulturen"] = [k for k in json.loads(zeile["kulturen"]) if k]
+        ergebnis.append(zeile)
+    return ergebnis
+
+
+def schlaege_fuer_anwendung(conn: sqlite3.Connection, application_id: int) -> dict[str, sqlite3.Row]:
+    """Schlag-ID im Export → Schlag in der Schlagkartei, für die PSM-Detailansicht."""
+    jahr = conn.execute("SELECT jahr FROM applications WHERE id = ?", (application_id,)).fetchone()
+    if jahr is None:
+        return {}
+    ergebnis = {}
+    for e in conn.execute(
+        "SELECT geo_wert FROM anwendung_einsatzorte WHERE application_id = ? AND geo_typ = 'Schlag-ID'",
+        (application_id,),
+    ):
+        schlag_id = schlag_fuer_nummer(conn, e["geo_wert"], jahr[0])
+        if schlag_id is not None:
+            ergebnis[e["geo_wert"]] = conn.execute("SELECT * FROM schlaege WHERE id = ?", (schlag_id,)).fetchone()
+    return ergebnis
+
+
+def zeitleiste(feldarbeiten: list[dict], psm: list[dict]) -> list[dict]:
+    """Feldarbeiten und PSM-Anwendungen gemeinsam, neueste zuerst."""
+    eintraege = [{"typ": "feldarbeit", "datum": f["datum"], "daten": f} for f in feldarbeiten]
+    eintraege += [{"typ": "psm", "datum": p["datum"], "daten": p} for p in psm]
+    return sorted(eintraege, key=lambda e: e["datum"], reverse=True)

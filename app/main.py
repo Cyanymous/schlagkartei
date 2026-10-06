@@ -124,12 +124,9 @@ templates.env.filters["datum_de"] = _datum_de
 @app.get("/", response_class=HTMLResponse)
 def uebersicht(request: Request) -> HTMLResponse:
     filters = _filters_aus_query(request)
-    conn = _get_conn()
-    try:
+    with _db() as conn:
         rows = queries.get_applications(conn, filters)
         optionen = queries.get_filter_optionen(conn)
-    finally:
-        conn.close()
     return templates.TemplateResponse(
         request,
         "uebersicht.html",
@@ -144,12 +141,12 @@ def uebersicht(request: Request) -> HTMLResponse:
 
 @app.get("/anwendung/{application_id}", response_class=HTMLResponse)
 def detail(request: Request, application_id: int) -> HTMLResponse:
-    conn = _get_conn()
-    try:
+    with _db() as conn:
         daten = queries.get_application_detail(conn, application_id)
-    finally:
-        conn.close()
-    return templates.TemplateResponse(request, "detail.html", {"daten": daten})
+        schlaege_zuordnung = schlagkartei.schlaege_fuer_anwendung(conn, application_id)
+    return templates.TemplateResponse(
+        request, "detail.html", {"daten": daten, "schlaege_zuordnung": schlaege_zuordnung}
+    )
 
 
 @app.post("/anwendung/{application_id}/notiz")
@@ -162,11 +159,8 @@ async def notiz_speichern(request: Request, application_id: int) -> RedirectResp
 
 @app.get("/import", response_class=HTMLResponse)
 def import_status(request: Request) -> HTMLResponse:
-    conn = _get_conn()
-    try:
+    with _db() as conn:
         dateien = queries.get_import_files(conn)
-    finally:
-        conn.close()
     return templates.TemplateResponse(request, "import_status.html", {"dateien": dateien})
 
 
@@ -257,10 +251,24 @@ def schlag_detail(request: Request, schlag_id: int) -> HTMLResponse:
         schlag = schlagkartei.get_schlag(conn, schlag_id, jahr)
         staende = schlagkartei.get_staende(conn, schlag_id)
         betriebe = schlagkartei.get_betriebe(conn)
+        matrix = schlagkartei.anbau_matrix(schlagkartei.get_anbau(conn, schlag_id))
+        zeitleiste = schlagkartei.zeitleiste(
+            schlagkartei.get_feldarbeiten(conn, schlag_id=str(schlag_id)),
+            schlagkartei.get_psm_anwendungen(conn, schlag_id),
+        )
     return templates.TemplateResponse(
         request,
         "schlag.html",
-        {"schlag": schlag, "staende": staende, "betriebe": betriebe, "jahr": jahr},
+        {
+            "schlag": schlag,
+            "staende": staende,
+            "betriebe": betriebe,
+            "jahr": jahr,
+            "jahre": _jahre(),
+            "matrix": matrix,
+            "wiederholt": schlagkartei.wiederholte_hauptkultur(matrix),
+            "zeitleiste": zeitleiste,
+        },
     )
 
 
@@ -527,11 +535,8 @@ def feldarbeiten_csv(request: Request) -> StreamingResponse:
 @app.get("/export.csv")
 def export_csv(request: Request) -> StreamingResponse:
     filters = _filters_aus_query(request)
-    conn = _get_conn()
-    try:
+    with _db() as conn:
         rows = queries.get_applications(conn, filters)
-    finally:
-        conn.close()
 
     kopf = ["Datum", "Betrieb", "Kultur", "Schlag", "Mittel", "Anwender"]
     zeilen = [

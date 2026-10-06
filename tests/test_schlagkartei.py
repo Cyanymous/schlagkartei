@@ -179,3 +179,52 @@ def test_feldarbeit_pruefungen(conn):
     assert sk.save_feldarbeit(conn, None, "2026-09-08", " ", "", [a])[1] is not None
     assert sk.save_feldarbeit(conn, None, "2026-09-08", "Scheiben", "", [])[1] is not None
     assert conn.execute("SELECT COUNT(*) FROM feldarbeiten").fetchone()[0] == 0
+
+
+# --- Pflanzenschutz je Schlag ---
+
+
+@pytest.fixture
+def conn_mit_import(tmp_path, conn):
+    export_dir = tmp_path / "exports"
+    export_dir.mkdir()
+    for pfad in FIXTURES.glob("*.zip"):
+        shutil.copy(pfad, export_dir)
+    import_exports(str(export_dir), conn)
+    return conn
+
+
+def test_psm_wird_ueber_schlagnummer_im_anwendungsjahr_zugeordnet(conn_mit_import):
+    conn = conn_mit_import
+    # Fixtures: Benevia 2026 auf Schlag-ID "1", Mospilan 2026 auf Schlag-ID "1000".
+    am_bach, _ = sk.create_schlag(conn, "Hof", "Am Bach", 2020, "1", 1.15)
+    spargel, _ = sk.create_schlag(conn, "Hof", "Spargelfeld", 2020, "1000", 1.15)
+
+    assert [p["mittel"][0]["name"] for p in sk.get_psm_anwendungen(conn, am_bach)] == ["BENEVIA"]
+    assert [p["mittel"][0]["name"] for p in sk.get_psm_anwendungen(conn, spargel)] == ["Mospilan SG"]
+
+
+def test_psm_zuordnung_folgt_geaenderter_schlagnummer(conn_mit_import):
+    conn = conn_mit_import
+    alt, _ = sk.create_schlag(conn, "Hof", "Alter Schlag 1", 2020, "1", 1.0)
+    sk.save_stand(conn, alt, 2026, "99", 1.0)
+    neu, _ = sk.create_schlag(conn, "Hof", "Neuer Schlag 1", 2026, "1", 1.0)
+
+    assert sk.get_psm_anwendungen(conn, alt) == []
+    assert len(sk.get_psm_anwendungen(conn, neu)) == 1
+
+
+def test_zeitleiste_mischt_feldarbeiten_und_psm(conn_mit_import):
+    conn = conn_mit_import
+    schlag_id, _ = sk.create_schlag(conn, "Hof", "Am Bach", 2020, "1", 1.15)
+    sk.save_feldarbeit(conn, None, "2026-05-10", "Hacken", "", [schlag_id])
+    sk.save_feldarbeit(conn, None, "2026-04-01", "Walzen", "", [schlag_id])
+
+    eintraege = sk.zeitleiste(
+        sk.get_feldarbeiten(conn, schlag_id=str(schlag_id)), sk.get_psm_anwendungen(conn, schlag_id)
+    )
+    assert [(e["datum"], e["typ"]) for e in eintraege] == [
+        ("2026-05-10", "feldarbeit"),
+        ("2026-05-04", "psm"),
+        ("2026-04-01", "feldarbeit"),
+    ]

@@ -117,3 +117,12 @@ def test_uebersicht_zeigt_deutsches_datum_und_trefferzahl(client):
     assert "04.05.2026" in r.text
     assert "2026-05-04" not in _tabellenzeilen(r.text)
     assert "2 Anwendungen" in r.text
+
+
+def test_detail_verlinkt_zugeordneten_schlag(client):
+    client.post(
+        "/schlaege",
+        data={"betrieb": "Hof", "name": "Am Bach", "schlagnummer": "1", "groesse_ha": "1,15", "ab_jahr": "2020"},
+    )
+    r = client.get(_detail_link(client))
+    assert "→ Schlag Am Bach" in r.text

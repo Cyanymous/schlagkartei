@@ -15,6 +15,78 @@
   </dl>
 </section>
 
+{% set planjahr = jahre[-1] %}
+<section class="karte">
+  <h2>Fruchtfolge</h2>
+  <div class="tabelle tabelle-breit">
+  <table class="anbauplan">
+    <thead>
+      <tr>{% for j in jahre %}<th {% if j == planjahr %}class="planung"{% endif %}>{{ j }}{% if j == planjahr %}<br><small>Planung</small>{% endif %}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      <tr>
+        {% for j in jahre %}
+        <td class="zelle {% if j == planjahr %}planung{% endif %} {% if (schlag.id, j) in wiederholt %}wiederholt{% endif %}">
+          <a class="zellenlink" href="/anbauplan/{{ schlag.id }}/{{ j }}" aria-label="{{ j }} bearbeiten">
+            {% for e in matrix.get((schlag.id, j), []) %}
+            <span class="anbau anbau-{{ e.art | lower }}" title="{{ e.art }}{% if e.bemerkung %}: {{ e.bemerkung }}{% endif %}">
+              {% if e.art != "Hauptkultur" %}<small>{{ {"Zwischenfrucht": "ZF", "Untersaat": "US", "Zweitfrucht": "2.F"}[e.art] }}</small>{% endif %}
+              {{ e.kultur }}
+            </span>
+            {% if e.bemerkung %}<span class="anbau-bemerkung">{{ e.bemerkung }}</span>{% endif %}
+            {% else %}
+            <span class="leer-zelle">+</span>
+            {% endfor %}
+            {% if (schlag.id, j) in wiederholt %}<span class="warnung" title="Gleiche Hauptkultur wie im Vorjahr">⚠</span>{% endif %}
+          </a>
+        </td>
+        {% endfor %}
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="karte">
+  <div class="kopfzeile">
+    <h2>Maßnahmen</h2>
+    <a class="knopf-primaer knopf-link" href="/feldarbeiten/neu?schlag={{ schlag.id }}">+ Feldarbeit erfassen</a>
+  </div>
+  <p class="hinweis">Feldarbeiten aus der Schlagkartei und Pflanzenschutz aus PSM-DOK
+    (zugeordnet über die Schlag-ID = Schlagnummer im Jahr der Anwendung).</p>
+  {% set ns = namespace(jahr=None) %}
+  <ol class="zeitleiste">
+    {% for e in zeitleiste %}
+    {% if e.datum[:4] != ns.jahr %}{% set ns.jahr = e.datum[:4] %}<li class="zeitleiste-jahr">{{ ns.jahr }}</li>{% endif %}
+    {% if e.typ == "feldarbeit" %}
+    {% set f = e.daten %}
+    <li class="ereignis">
+      <span class="ereignis-datum">{{ f.datum | datum_de }}</span>
+      <span class="chip chip-arbeit">{{ f.art }}</span>
+      <span class="ereignis-text">
+        {{ f.bemerkung or "" }}
+        {% if f.schlaege | length > 1 %}<small>zusammen mit {{ f.schlaege | rejectattr("id", "equalto", schlag.id) | map(attribute="name") | join(", ") }}</small>{% endif %}
+      </span>
+      <a class="ereignis-link" href="/feldarbeiten/{{ f.id }}">bearbeiten</a>
+    </li>
+    {% else %}
+    {% set p = e.daten %}
+    <li class="ereignis">
+      <span class="ereignis-datum">{{ p.datum | datum_de }}</span>
+      <span class="chip chip-mittel">Pflanzenschutz</span>
+      <span class="ereignis-text">
+        {% for m in p.mittel %}{{ m.name }}{% if m.menge is not none %} {{ m.menge | ha }} {{ m.einheit or "" }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+        {% if p.kulturen %}<small>{{ p.kulturen | join(", ") }}{% if p.anwender %} · {{ p.anwender }}{% endif %}</small>{% endif %}
+      </span>
+      <a class="ereignis-link" href="/anwendung/{{ p.id }}">Details</a>
+    </li>
+    {% endif %}
+    {% else %}
+    <li class="leer">Noch keine Maßnahmen erfasst.</li>
+    {% endfor %}
+  </ol>
+</section>
+
 <section class="karte">
   <h2>Schlagnummer und Größe je Jahr</h2>
   <p class="hinweis">Ein Stand gilt ab seinem Jahr, bis ein neuerer eingetragen ist.
