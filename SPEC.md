@@ -1,6 +1,6 @@
 # Schlagkartei – Spezifikation
 
-Stand: 06.10.2026 · Status: Stufe 1 umgesetzt
+Stand: 06.10.2026 · Status: Stufe 1 umgesetzt, Stufe 2 in Arbeit
 
 ## 1. Ziel
 
@@ -28,8 +28,8 @@ weniger beweglichen Teilen.
 
 | Stufe | Inhalt | Status |
 |-------|--------|--------|
-| 1 | Import der PSM-DOK-Exporte, Gesamtübersicht mit Filtern, CSV-Export, Notizen je Anwendung | **jetzt** |
-| 2 | Schlag-Stammdaten, einfache Berechnungen | später |
+| 1 | Import der PSM-DOK-Exporte, Gesamtübersicht mit Filtern, CSV-Export, Notizen je Anwendung | fertig |
+| 2 | Schlagkartei: Schläge, Kulturen mit EPPO-Code, Anbau/Fruchtfolge mit Planung, Feldarbeiten, einfache Auswertungen (Abschnitt 12) | **jetzt** |
 | 3 | Eigene Eingabemaske als Ersatz für PSM-DOK (volle Schlagkartei) | später |
 
 Notizen je Anwendung wurden am 06.10.2026 auf Wunsch des Betreibers aus
@@ -256,7 +256,10 @@ CSV-Export enthält die gefilterten Zeilen.
 - Update auf dem Server: `git pull && docker compose up -d --build`
 - Backup: `exports/` ist der rechtlich relevante Bestand und gehört in die
   Serversicherung. Seit es Notizen gibt, gehört auch `data/` in die
-  Sicherung, weil dort eigene, nicht rekonstruierbare Daten liegen.
+  Sicherung, weil dort eigene, nicht rekonstruierbare Daten liegen. Ab
+  Stufe 2 legt die App zusätzlich einmal täglich eine Kopie der Datenbank in
+  `data/backup/` an (die letzten 30 werden behalten); das ersetzt die
+  Serversicherung nicht, schützt aber vor versehentlichem Löschen in der App.
 
 ## 10. Abnahmekriterien für Stufe 1
 
@@ -318,3 +321,62 @@ hier eintragen.
 Noch offen, nicht blockierend für Stufe 1: ein Fixture mit korrigiertem
 Eintrag, eines mit Tankmischung, eines mit einem `geoTyp` ungleich
 `"Schlag-ID"`, und eines mit befüllten `zusatzstoffe`.
+
+## 12. Stufe 2 – Schlagkartei
+
+Entschieden am 06.10.2026. Alle Tabellen sind eigene Daten (Abschnitt 5,
+Regel 2); `data/` ist damit der einzige Ort, an dem sie stehen.
+
+### Fachliche Entscheidungen
+
+- **Schläge:** ca. 15. Jeder Schlag gehört genau einem Betrieb und hat einen
+  Umgangsnamen (z. B. „Hinterm Hof“).
+- **Schlagnummer und Größe je Jahr:** Beide können sich im Agrarantrag von
+  Jahr zu Jahr ändern. Sie werden als Stand „ab Jahr“ gespeichert und gelten,
+  bis ein neuer Stand eingetragen wird – so muss nicht jedes Jahr alles neu
+  erfasst werden. Schlagnummern sind betriebsübergreifend eindeutig.
+- **Anbau ab 2020:** je Schlag und Jahr beliebig viele Kulturen mit Art
+  (Hauptkultur, Zwischenfrucht, Untersaat, Zweitfrucht) und Bemerkung.
+- **Planung:** Das Jahr nach dem aktuellen ist die Planung. Plan und Ist
+  werden nicht getrennt gespeichert; die Planung wird einfach überschrieben.
+- **Kulturen:** eigene Liste mit Name und EPPO-Code. Vorbelegt mit gängigen
+  Kulturen, deren Codes gegen die EPPO Global Database (gd.eppo.int) geprüft
+  sind; ergänzt um alle Kulturen aus den PSM-DOK-Exporten (nur neue Namen,
+  vorhandene Einträge werden nicht überschrieben).
+- **Feldarbeiten:** Datum, Art (freier Text mit Vorschlägen aus bisherigen
+  Einträgen), Bemerkung. Eine Feldarbeit kann für mehrere Schläge auf einmal
+  erfasst werden.
+- **Pflanzenschutz in der Schlagkartei:** Eine PSM-Anwendung gehört zu einem
+  Schlag, wenn die `Schlag-ID` des Einsatzorts im Export gleich der
+  Schlagnummer ist, die der Schlag im Jahr der Anwendung hat. Der Betreiber
+  trägt in PSM-DOK die Schlagnummer als Schlag-ID ein. PSM-Anwendungen sind
+  in der Schlagkartei nur lesbar.
+
+### Tabellen
+
+- `schlaege`: Betrieb, Umgangsname, aktiv.
+- `schlag_staende`: Schlag, ab Jahr, Schlagnummer, Größe in ha.
+- `kulturen`: Name (eindeutig), EPPO-Code.
+- `anbau`: Schlag, Jahr, Kultur, Art, Bemerkung.
+- `feldarbeiten`: Datum, Art, Bemerkung.
+- `feldarbeit_schlaege`: Zuordnung Feldarbeit ↔ Schlag (mehrere je Arbeit).
+
+### Oberfläche
+
+1. **Schläge:** Liste mit aktueller Schlagnummer und Größe; anlegen und
+   bearbeiten, Stände je Jahr pflegen.
+2. **Schlag-Detailseite (Schlagkartei):** Stammdaten, Fruchtfolge ab 2020
+   einschließlich Planung, darunter eine gemeinsame Zeitleiste aus
+   Feldarbeiten und PSM-Anwendungen.
+3. **Anbauplan:** Matrix Schläge × Jahre (2020 bis nächstes Jahr), Zelle
+   anklicken zum Bearbeiten; Hinweis, wenn ein Schlag in aufeinander
+   folgenden Jahren dieselbe Hauptkultur trägt; Anbauumfang (Summe ha je
+   Hauptkultur und Jahr); CSV-Export.
+4. **Feldarbeiten:** Liste mit Filter nach Jahr, Schlag und Art; erfassen und
+   bearbeiten mit Mehrfachauswahl der Schläge; CSV-Export.
+5. **Kulturen:** Liste Name → EPPO-Code, anlegen und bearbeiten.
+
+### Nicht-Ziele in Stufe 2
+
+- Keine Düngedokumentation, kein Ertrag, keine Karten (später möglich)
+- Weiterhin kein Login, keine Eingabe von PSM-Anwendungen

@@ -10,8 +10,9 @@ Vollständige Anforderungen: @SPEC.md. Bei Widerspruch gilt SPEC.md.
 
 ## Aktueller Stand
 
-Gebaut wird **Stufe 1** (Import, Übersicht mit Filtern, CSV-Export).
-Nichts aus Stufe 2 oder 3 umsetzen, auch nicht vorbereitend.
+Stufe 1 (Import, Übersicht mit Filtern, CSV-Export, Notizen) ist fertig.
+Gebaut wird **Stufe 2** (Schlagkartei, SPEC.md Abschnitt 12). Nichts aus
+Stufe 3 umsetzen, auch nicht vorbereitend.
 
 ## Oberstes Ziel: Einfachheit
 
