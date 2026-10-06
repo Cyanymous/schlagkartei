@@ -70,3 +70,25 @@ def test_csv_export_enthaelt_nur_gefilterte_zeilen(client):
     assert ";" in text
     assert "BENEVIA" in text
     assert "Mospilan" not in text
+
+
+def test_detail_trennt_bbch_code_und_name(client):
+    r = client.get("/", params={"mittel": "BENEVIA"})
+    link = _tabellenzeilen(r.text).split('href="')[1].split('"')[0]
+    r = client.get(link)
+    assert "19 – 9 oder mehr Laubblätter" in r.text
+
+
+def test_ortszeit_rechnet_utc_in_lokale_zeit_um(monkeypatch):
+    import time
+
+    from app.main import _ortszeit
+
+    monkeypatch.setenv("TZ", "Europe/Berlin")
+    time.tzset()
+    try:
+        assert _ortszeit("2026-10-05T20:01:12+00:00") == "05.10.2026 22:01"
+        assert _ortszeit(None) == ""
+    finally:
+        monkeypatch.undo()
+        time.tzset()

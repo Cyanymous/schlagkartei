@@ -15,8 +15,8 @@
   <tr><th>Verantwortlich</th><td>{{ a.verantwortlich }}</td></tr>
   <tr><th>Art der Verwendung</th><td>{{ a.art_verwendung }}</td></tr>
   <tr><th>Herkunftsdatei</th><td>{{ daten.import_datei }} ({{ a.json_name }})</td></tr>
-  <tr><th>Zuerst gesehen am</th><td>{{ a.zuerst_gesehen_am }}</td></tr>
-  {% if a.geaendert_am %}<tr><th>Geändert am</th><td>{{ a.geaendert_am }}</td></tr>{% endif %}
+  <tr><th>Zuerst gesehen am</th><td>{{ a.zuerst_gesehen_am | ortszeit }}</td></tr>
+  {% if a.geaendert_am %}<tr><th>Geändert am</th><td>{{ a.geaendert_am | ortszeit }}</td></tr>{% endif %}
 </table>
 
 <h2>Kulturen</h2>
@@ -24,7 +24,7 @@
   <thead><tr><th>Name</th><th>EPPO-Code</th><th>BBCH</th><th>Satzweise</th></tr></thead>
   <tbody>
     {% for k in daten.kulturen %}
-    <tr><td>{{ k.name }}</td><td>{{ k.eppo_code }}</td><td>{{ k.bbch_code }} {{ k.bbch_name }}</td><td>{{ k.satzweise }}</td></tr>
+    <tr><td>{{ k.name }}</td><td>{{ k.eppo_code }}</td><td>{{ k.bbch_code or '' }}{% if k.bbch_code and k.bbch_name %} – {% endif %}{{ k.bbch_name or '' }}</td><td>{{ k.satzweise }}</td></tr>
     {% endfor %}
   </tbody>
 </table>
