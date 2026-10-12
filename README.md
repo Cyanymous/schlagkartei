@@ -92,8 +92,9 @@ sie stehen auch noch in einer anderen Datei im Ordner.
   Monat der Plakette in den Stammdaten; nach der Prüfung den neuen Monat
   eintragen, leer heißt kein TÜV. Fahrzeuge werden nicht gelöscht,
   sondern auf „inaktiv“ gesetzt.
-- **Fahrzeugbuch** (`/fuhrpark/buch`): alle Einträge mit Filter nach Jahr,
-  Fahrzeug und Art, Summe der Liter (≈ = geschätzt) und CSV-Export.
+- **Fahrzeugbuch** (`/fuhrpark/buch`): alle Einträge nach Monaten, mit
+  Filter nach Jahr, Fahrzeug und Art, Summe der Liter (≈ = geschätzt) und
+  CSV-Export. ✓ markiert Einträge, die eine Wartungsaufgabe erledigen.
   Eintrag anklicken zum Bearbeiten oder Löschen.
 
 ### Pflanzenschutz (PSM-DOK)

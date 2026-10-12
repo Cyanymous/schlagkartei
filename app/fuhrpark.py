@@ -93,7 +93,9 @@ def get_eintraege(
     conn: sqlite3.Connection, fahrzeug_id: str = "", jahr: str = "", art: str = ""
 ) -> list[sqlite3.Row]:
     return conn.execute(
-        """SELECT e.*, f.name AS fahrzeug, f.einheit
+        """SELECT e.*, f.name AS fahrzeug, f.einheit,
+               EXISTS (SELECT 1 FROM wartungsaufgaben w
+                       WHERE w.fahrzeug_id = e.fahrzeug_id AND w.aufgabe = e.art) AS ist_wartung
            FROM fahrzeug_eintraege e JOIN fahrzeuge f ON f.id = e.fahrzeug_id
            WHERE (:fahrzeug = '' OR e.fahrzeug_id = :fahrzeug)
              AND (:jahr = '' OR substr(e.datum, 1, 4) = :jahr)

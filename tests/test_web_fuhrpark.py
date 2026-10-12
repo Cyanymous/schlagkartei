@@ -72,8 +72,8 @@ def test_tanken_an_der_tankstelle_mit_genauen_litern(client):
     )
     buch = client.get("/fuhrpark/buch?fahrzeug=1").text
     assert "123.456 km" in buch
-    assert "69,6" in buch and "≈" not in buch.split("<tbody>")[1].split("</tbody>")[0]
-    assert "4711/0815" in buch
+    assert "69,6 L · Beleg 4711/0815" in buch
+    assert "≈" not in buch
 
 
 def test_fehlerhafter_eintrag_zeigt_formular_mit_eingaben(client):
@@ -144,3 +144,25 @@ def test_erfassen_zeigt_letzten_stand_und_90_prozent(client):
     assert "zuletzt 3.054 h" in seite
     assert '<option value="90" selected>' in seite
     assert 'name="zurueck" value="/fuhrpark/fahrzeuge/1"' in seite
+
+
+def test_fahrzeugbuch_gruppiert_und_markiert_wartung(client):
+    _fahrzeug_anlegen(client)
+    client.post("/fuhrpark/fahrzeuge/1/aufgaben", data={"aufgabe": "Ölwechsel", "intervall_zaehler": "500"})
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-07-01", "art": "Ölwechsel", "zaehlerstand": "3077"})
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-04-04", "art": "Tanken", "prozent": "90"})
+
+    buch = client.get("/fuhrpark/buch").text
+    assert "Juli 2026" in buch and "April 2026" in buch
+    assert "✓ Ölwechsel" in buch
+    assert "≈ 108 L (90 %)" in buch
+    assert "zusammen 108 L getankt (teils geschätzt, ≈)" in buch
+
+
+def test_fahrzeugseite_zeigt_nur_die_letzten_eintraege(client):
+    _fahrzeug_anlegen(client)
+    for tag in range(1, 13):
+        client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": f"2026-03-{tag:02d}", "art": "Zählerstand", "zaehlerstand": str(tag)})
+    seite = client.get("/fuhrpark/fahrzeuge/1").text
+    assert "12.03.2026" in seite and "02.03.2026" not in seite
+    assert "alle 12 Einträge im Fahrzeugbuch" in seite

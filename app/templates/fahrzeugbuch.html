@@ -28,7 +28,10 @@
   <a class="knopf-primaer" href="/fuhrpark/erfassen">+ Erfassen</a>
 </form>
 
-<p class="trefferzahl">{{ eintraege | length }} {{ "Eintrag" if eintraege | length == 1 else "Einträge" }}</p>
+{% set liter = eintraege | map(attribute="liter") | select("number") | list %}
+<p class="trefferzahl">{{ eintraege | length }} {{ "Eintrag" if eintraege | length == 1 else "Einträge" }}{% if liter %} · zusammen {{ liter | sum | zahl }} L getankt{% if eintraege | selectattr("prozent") | list %} (teils geschätzt, ≈){% endif %}{% endif %}</p>
+<div class="karte">
 {% set mit_fahrzeug = true %}
-{% include "fahrzeugbuch_tabelle.html" %}
+{% include "fahrzeugbuch_liste.html" %}
+</div>
 {% endblock %}

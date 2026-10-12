@@ -1,0 +1,21 @@
+{# Eingebunden in Fahrzeugbuch und Fahrzeugseite; mit_fahrzeug zeigt den Fahrzeugnamen. #}
+{% set ns = namespace(monat=None) %}
+<ol class="zeitleiste">
+  {% for e in eintraege %}
+  {% if e.datum[:7] != ns.monat %}{% set ns.monat = e.datum[:7] %}<li class="zeitleiste-jahr">{{ ns.monat | monat_name }}</li>{% endif %}
+  {% set art = "wartung" if e.ist_wartung else {"Tanken": "tanken", "Reparatur": "reparatur", "TÜV": "tuev"}.get(e.art, "sonst") %}
+  {% set liter = (("≈ " if e.prozent else "") ~ (e.liter | zahl) ~ " L" ~ ((" (" ~ e.prozent ~ " %)") if e.prozent else "")) if e.liter is not none else "" %}
+  <li class="ereignis klickbar">
+    <span class="ereignis-datum">{{ e.datum | datum_de }}</span>
+    <span class="chip art-{{ art }}" {% if e.ist_wartung %}title="erledigt eine Wartungsaufgabe"{% endif %}>{% if e.ist_wartung %}✓ {% endif %}{{ e.art }}</span>
+    <span class="ereignis-text">
+      {% if mit_fahrzeug %}<strong>{{ e.fahrzeug }}</strong>{% endif %}
+      {% if e.zaehlerstand is not none %}{% if mit_fahrzeug %} · {% endif %}{{ e.zaehlerstand | zahl }} {{ e.einheit }}{% endif %}
+      <small>{{ [liter, ("Beleg " ~ e.beleg) if e.beleg else "", e.bemerkung or ""] | select | join(" · ") }}</small>
+    </span>
+    <a class="ereignis-link zeilenlink" href="/fuhrpark/eintraege/{{ e.id }}">bearbeiten</a>
+  </li>
+  {% else %}
+  <li class="leer">Keine Einträge.</li>
+  {% endfor %}
+</ol>

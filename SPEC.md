@@ -471,7 +471,10 @@ gibt kein Übernahmeskript.
    Zählerstand und Link zu allen früheren Erledigungen), und den Status als
    Wort statt nur als Farbe.
 4. **Fahrzeugbuch:** Liste aller Einträge mit Filter nach Jahr, Fahrzeug und
-   Art; CSV-Export.
+   Art; CSV-Export. Nach Monaten gruppiert, die Art farbig (Einträge, die
+   eine Wartungsaufgabe erledigen, mit ✓), Liter, Beleg und Bemerkung klein
+   unter der Zeile. Die Fahrzeugseite zeigt nur die letzten 10 Einträge und
+   verweist für den Rest auf das Fahrzeugbuch.
 
 ### Nicht-Ziele
 

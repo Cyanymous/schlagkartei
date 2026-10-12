@@ -747,6 +747,27 @@ li.ereignis {
 .ampel-gruen { background: var(--ok-bg); color: var(--primary-dark); }
 .ampel-grau { background: var(--chip-bg); color: var(--muted); }
 
+/* Fahrzeugbuch: ganze Zeile anklickbar, Farbe je Art des Eintrags. */
+li.klickbar {
+  position: relative;
+}
+
+li.klickbar a.zeilenlink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+li.klickbar:hover {
+  background: var(--hover);
+}
+
+.chip.art-tanken { background: var(--betrieb-1-bg); color: var(--betrieb-1-text); font-weight: 600; }
+.chip.art-wartung { background: var(--ok-bg); color: var(--primary-dark); font-weight: 600; }
+.chip.art-reparatur { background: var(--chip-mittel-bg); color: var(--chip-mittel-text); font-weight: 600; }
+.chip.art-tuev { background: var(--betrieb-2-bg); color: var(--betrieb-2-text); font-weight: 600; }
+.chip.art-sonst { color: var(--muted); }
+
 .erledigt {
   color: var(--primary-dark);
   font-weight: 600;

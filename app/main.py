@@ -137,7 +137,17 @@ def _monat_de(wert: str | None) -> str:
     return f"{wert[5:7]}/{wert[:4]}"
 
 
+MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
+          "August", "September", "Oktober", "November", "Dezember"]
+
+
+def _monat_name(wert: str) -> str:
+    """JJJJ-MM als Zwischenüberschrift, z. B. „Oktober 2026“."""
+    return f"{MONATE[int(wert[5:7]) - 1]} {wert[:4]}"
+
+
 templates.env.filters["ha"] = _ha
+templates.env.filters["monat_name"] = _monat_name
 templates.env.filters["monat_de"] = _monat_de
 templates.env.filters["zahl"] = fuhrpark.zahl_de
 
@@ -623,7 +633,9 @@ def fahrzeug_detail(request: Request, fahrzeug_id: int) -> HTMLResponse:
         {
             "fahrzeug": fahrzeug,
             "einheiten": fuhrpark.EINHEITEN,
-            "eintraege": eintraege,
+            # Auf der Fahrzeugseite nur die letzten Einträge; der Rest steht im Fahrzeugbuch.
+            "eintraege": eintraege[:10],
+            "anzahl_eintraege": len(eintraege),
             "punkte": punkte,
             "bearbeiten": _jahr(request.query_params.get("bearbeiten", ""), 0),
         },

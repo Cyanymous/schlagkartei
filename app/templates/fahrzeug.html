@@ -89,7 +89,10 @@
     {% if fahrzeug.aktiv %}<a class="knopf-primaer knopf-link" href="/fuhrpark/erfassen?fahrzeug={{ fahrzeug.id }}">+ Eintrag</a>{% endif %}
   </div>
   {% set mit_fahrzeug = false %}
-  {% include "fahrzeugbuch_tabelle.html" %}
+  {% include "fahrzeugbuch_liste.html" %}
+  {% if anzahl_eintraege > eintraege | length %}
+  <p><a href="/fuhrpark/buch?fahrzeug={{ fahrzeug.id }}">alle {{ anzahl_eintraege }} Einträge im Fahrzeugbuch &rarr;</a></p>
+  {% endif %}
 </section>
 
 <details class="karte" id="stammdaten">
