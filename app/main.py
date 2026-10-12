@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from app import config, queries, schlagkartei
+from app import config, fuhrpark, queries, schlagkartei
 from app.db import connect, taegliche_sicherung
 from app.importer import import_exports
 
@@ -119,7 +119,15 @@ def _ha(wert: float | None) -> str:
     return f"{wert:.4f}".rstrip("0").rstrip(".").replace(".", ",")
 
 
+def _monat_de(wert: str | None) -> str:
+    """JJJJ-MM als MM/JJJJ, wie es auf der TÜV-Plakette steht."""
+    if not wert:
+        return ""
+    return f"{wert[5:7]}/{wert[:4]}"
+
+
 templates.env.filters["ha"] = _ha
+templates.env.filters["monat_de"] = _monat_de
 templates.env.filters["ortszeit"] = _ortszeit
 templates.env.filters["datum_de"] = _datum_de
 
@@ -538,6 +546,58 @@ def feldarbeiten_csv(request: Request) -> StreamingResponse:
         for f in liste
     ]
     return _csv_antwort("feldarbeiten.csv", ["Datum", "Art", "Schläge", "Bemerkung"], zeilen)
+
+
+# --- Fuhrpark: Fahrzeuge -------------------------------------------------------
+
+
+def _fahrzeug_daten(f: dict[str, list[str]], neu: bool) -> dict:
+    daten = {
+        name: _feld(f, name)
+        for name in ["name", "typ", "kennzeichen", "oelfilter", "einheit", "tuev_faellig", "bemerkung"]
+    }
+    daten["tank_liter"] = _zahl(_feld(f, "tank_liter"))
+    # Beim Anlegen gibt es kein Häkchen „aktiv“; neue Fahrzeuge sind immer aktiv.
+    daten["aktiv"] = neu or _feld(f, "aktiv") == "1"
+    return daten
+
+
+@app.get("/fuhrpark", response_class=HTMLResponse)
+def fuhrpark_uebersicht(request: Request) -> HTMLResponse:
+    with _db() as conn:
+        fahrzeuge = fuhrpark.get_fahrzeuge(conn)
+    return templates.TemplateResponse(
+        request, "fuhrpark.html", {"fahrzeuge": fahrzeuge, "einheiten": fuhrpark.EINHEITEN}
+    )
+
+
+@app.post("/fuhrpark/fahrzeuge")
+async def fahrzeug_anlegen(request: Request) -> RedirectResponse:
+    f = await _formular(request)
+    with _db() as conn:
+        fahrzeug_id, fehler = fuhrpark.save_fahrzeug(conn, None, _fahrzeug_daten(f, neu=True))
+    if fehler:
+        return _zurueck("/fuhrpark", fehler)
+    return _zurueck(f"/fuhrpark/fahrzeuge/{fahrzeug_id}")
+
+
+@app.get("/fuhrpark/fahrzeuge/{fahrzeug_id}", response_class=HTMLResponse)
+def fahrzeug_detail(request: Request, fahrzeug_id: int) -> HTMLResponse:
+    with _db() as conn:
+        fahrzeug = fuhrpark.get_fahrzeug(conn, fahrzeug_id)
+    if fahrzeug is None:
+        return HTMLResponse("Fahrzeug nicht gefunden.", status_code=404)
+    return templates.TemplateResponse(
+        request, "fahrzeug.html", {"fahrzeug": fahrzeug, "einheiten": fuhrpark.EINHEITEN}
+    )
+
+
+@app.post("/fuhrpark/fahrzeuge/{fahrzeug_id}")
+async def fahrzeug_speichern(request: Request, fahrzeug_id: int) -> RedirectResponse:
+    f = await _formular(request)
+    with _db() as conn:
+        _, fehler = fuhrpark.save_fahrzeug(conn, fahrzeug_id, _fahrzeug_daten(f, neu=False))
+    return _zurueck(f"/fuhrpark/fahrzeuge/{fahrzeug_id}", fehler)
 
 
 # --- CSV-Export Pflanzenschutz -------------------------------------------------

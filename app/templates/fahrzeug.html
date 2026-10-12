@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ fahrzeug.name }} – Fuhrpark{% endblock %}
+{% block content %}
+<p><a href="/fuhrpark">&larr; Fuhrpark</a></p>
+<h1>{{ fahrzeug.name }}{% if not fahrzeug.aktiv %} <span class="badge">inaktiv</span>{% endif %}</h1>
+
+<section class="karte">
+  <dl class="steckbrief">
+    <div><dt>Typ / Serie</dt><dd>{{ fahrzeug.typ or "–" }}</dd></div>
+    <div><dt>Kennzeichen</dt><dd>{{ fahrzeug.kennzeichen or "–" }}</dd></div>
+    <div><dt>Ölfilter</dt><dd>{{ fahrzeug.oelfilter or "–" }}</dd></div>
+    <div><dt>Tankgröße</dt><dd>{% if fahrzeug.tank_liter %}{{ fahrzeug.tank_liter | ha }} L{% else %}–{% endif %}</dd></div>
+    <div><dt>TÜV fällig</dt><dd>{{ (fahrzeug.tuev_faellig | monat_de) or "kein TÜV" }}</dd></div>
+    {% if fahrzeug.bemerkung %}<div class="breit"><dt>Bemerkung</dt><dd>{{ fahrzeug.bemerkung }}</dd></div>{% endif %}
+  </dl>
+</section>
+
+<details class="karte">
+  <summary>Stammdaten bearbeiten</summary>
+  <form method="post" action="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}">
+    <div class="formzeile">
+      <label>Name <input name="name" value="{{ fahrzeug.name }}" required></label>
+      <label>Typ / Serie <input name="typ" value="{{ fahrzeug.typ or '' }}"></label>
+      <label>Kennzeichen <input name="kennzeichen" value="{{ fahrzeug.kennzeichen or '' }}" size="12"></label>
+      <label>Ölfilter <input name="oelfilter" value="{{ fahrzeug.oelfilter or '' }}" size="14"></label>
+    </div>
+    <div class="formzeile">
+      <label>Zähler
+        <select name="einheit">
+          <option value="">kein Zähler</option>
+          {% for e in einheiten %}<option {% if fahrzeug.einheit == e %}selected{% endif %}>{{ e }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Tankgröße (L) <input name="tank_liter" inputmode="decimal" size="6" value="{{ fahrzeug.tank_liter | ha }}"></label>
+      <label>TÜV fällig <input type="month" name="tuev_faellig" value="{{ fahrzeug.tuev_faellig or '' }}"></label>
+      <label class="breit">Bemerkung <input name="bemerkung" value="{{ fahrzeug.bemerkung or '' }}"></label>
+      <label class="checkbox"><input type="checkbox" name="aktiv" value="1" {% if fahrzeug.aktiv %}checked{% endif %}> aktiv</label>
+      <button type="submit">Speichern</button>
+    </div>
+  </form>
+  <p class="hinweis">TÜV leer lassen, wenn das Fahrzeug keinen braucht. Fahrzeuge werden nicht
+    gelöscht, sondern auf inaktiv gesetzt; so bleibt ihr Fahrzeugbuch erhalten.
+    Eine geänderte Tankgröße gilt nur für neue Tankeinträge.</p>
+</details>
+{% endblock %}

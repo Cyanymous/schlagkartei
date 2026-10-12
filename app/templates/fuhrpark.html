@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Fuhrpark – Schlagkartei{% endblock %}
+{% block content %}
+<h1>Fuhrpark</h1>
+
+<details class="karte" {% if not fahrzeuge %}open{% endif %}>
+  <summary>Neues Fahrzeug anlegen</summary>
+  <form class="formzeile" method="post" action="/fuhrpark/fahrzeuge">
+    <label>Name <input name="name" required placeholder="z. B. JD 5720"></label>
+    <label>Zähler
+      <select name="einheit">
+        <option value="">kein Zähler</option>
+        {% for e in einheiten %}<option>{{ e }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Tankgröße (L) <input name="tank_liter" inputmode="decimal" size="6"></label>
+    <button type="submit">Anlegen</button>
+  </form>
+  <p class="hinweis">Kennzeichen, Ölfilter, TÜV und Wartungsplan trägst du danach auf der Seite des Fahrzeugs ein.</p>
+</details>
+
+<div class="tabelle">
+<table class="klickbar">
+  <thead><tr><th>Fahrzeug</th><th>Typ</th><th>Kennzeichen</th><th>Zähler</th><th class="zahl">Tank (L)</th><th>TÜV</th></tr></thead>
+  <tbody>
+    {% for f in fahrzeuge %}
+    <tr {% if not f.aktiv %}class="inaktiv"{% endif %}>
+      <td><a class="zeilenlink" href="/fuhrpark/fahrzeuge/{{ f.id }}">{{ f.name }}</a>{% if not f.aktiv %} <span class="badge">inaktiv</span>{% endif %}</td>
+      <td>{{ f.typ or "" }}</td>
+      <td class="nowrap">{{ f.kennzeichen or "" }}</td>
+      <td>{{ f.einheit or "–" }}</td>
+      <td class="zahl">{{ f.tank_liter | ha }}</td>
+      <td>{{ f.tuev_faellig | monat_de }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="leer">Noch keine Fahrzeuge angelegt.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

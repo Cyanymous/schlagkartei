@@ -15,6 +15,7 @@
       <a href="/anbauplan" {% if pfad.startswith("/anbauplan") %}class="aktiv"{% endif %}>Anbauplan</a>
       <a href="/feldarbeiten" {% if pfad.startswith("/feldarbeiten") %}class="aktiv"{% endif %}>Feldarbeiten</a>
       <a href="/" {% if pfad == "/" or pfad.startswith("/anwendung") %}class="aktiv"{% endif %}>Pflanzenschutz</a>
+      <a href="/fuhrpark" {% if pfad.startswith("/fuhrpark") %}class="aktiv"{% endif %}>Fuhrpark</a>
       <a href="/kulturen" {% if pfad.startswith("/kulturen") %}class="aktiv"{% endif %}>Kulturen</a>
       <a href="/import" {% if pfad.startswith("/import") %}class="aktiv"{% endif %}>Import</a>
     </nav>
