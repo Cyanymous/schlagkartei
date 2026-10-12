@@ -466,7 +466,10 @@ gibt kein Übernahmeskript.
    (Fahrzeug, Datum, Zählerstand, Prozent oder genaue Liter, Beleg) und
    „Sonstiger Eintrag“ (Fahrzeug, Datum, Art, Zählerstand, Bemerkung).
 3. **Fahrzeugseite:** Stammdaten bearbeiten, Wartungsplan pflegen,
-   Fahrzeugbuch des Fahrzeugs, Einträge bearbeiten und löschen.
+   Fahrzeugbuch des Fahrzeugs, Einträge bearbeiten und löschen. Der
+   Wartungsplan zeigt je Aufgabe, wann sie zuletzt erledigt wurde (mit
+   Zählerstand und Link zu allen früheren Erledigungen), und den Status als
+   Wort statt nur als Farbe.
 4. **Fahrzeugbuch:** Liste aller Einträge mit Filter nach Jahr, Fahrzeug und
    Art; CSV-Export.
 

@@ -22,7 +22,7 @@
   <h2>Wartungsplan</h2>
   <div class="tabelle">
   <table>
-    <thead><tr><th>Aufgabe</th><th>Intervall</th><th>Zuletzt</th><th>Nächste Fälligkeit</th><th></th></tr></thead>
+    <thead><tr><th>Aufgabe</th><th>Intervall</th><th>Zuletzt erledigt</th><th>Nächste Fälligkeit</th><th></th></tr></thead>
     <tbody>
       {% for p in punkte %}
       {% if p.id and p.id == bearbeiten %}
@@ -51,8 +51,17 @@
           {% if p.intervall_monate %}alle {{ p.intervall_monate }} Monate{% endif %}
           {% else %}laut Plakette{% endif %}
         </td>
-        <td>{% if p.letzte %}{{ p.letzte.datum | datum_de }}{% if p.letzte.zaehlerstand is not none %}<small class="unterzeile">bei {{ p.letzte.zaehlerstand | zahl }} {{ fahrzeug.einheit }}</small>{% endif %}{% elif p.id %}–{% endif %}</td>
-        <td><span class="ampel ampel-{{ p.status }}">{{ {"rot": "überfällig", "gelb": "bald", "gruen": "ok", "grau": "?"}[p.status] }}</span> {{ p.text }}</td>
+        <td>
+          {% if p.letzte %}
+          <span class="erledigt">✓ {{ p.letzte.datum | datum_de }}</span>
+          {% if p.letzte.zaehlerstand is not none %}<small class="unterzeile">bei {{ p.letzte.zaehlerstand | zahl }} {{ fahrzeug.einheit }}</small>{% endif %}
+          {% if p.anzahl > 1 %}<small class="unterzeile"><a href="/fuhrpark/buch?fahrzeug={{ fahrzeug.id }}&art={{ p.name | urlencode }}">alle {{ p.anzahl }} anzeigen</a></small>{% endif %}
+          {% elif p.id %}<span class="hinweis">noch nie</span>{% endif %}
+        </td>
+        <td>
+          <span class="ampel ampel-{{ p.status }}">{{ {"rot": "überfällig", "gelb": "bald fällig", "gruen": "in Ordnung", "grau": "unklar"}[p.status] }}</span>
+          <small class="unterzeile">{{ p.text }}</small>
+        </td>
         <td class="aktion">{% if p.id %}<a href="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}?bearbeiten={{ p.id }}#wartung">bearbeiten</a>{% else %}<a href="#stammdaten">in Stammdaten</a>{% endif %}</td>
       </tr>
       {% endif %}

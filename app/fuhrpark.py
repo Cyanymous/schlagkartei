@@ -358,7 +358,11 @@ def wartungsplan(conn: sqlite3.Connection, fahrzeug: sqlite3.Row, heute: date) -
                WHERE fahrzeug_id = ? AND art = ? ORDER BY datum DESC, id DESC LIMIT 1""",
             (fahrzeug["id"], a["aufgabe"]),
         ).fetchone()
-        punkt = dict(a) | {"name": a["aufgabe"], "letzte": letzte}
+        anzahl = conn.execute(
+            "SELECT COUNT(*) FROM fahrzeug_eintraege WHERE fahrzeug_id = ? AND art = ?",
+            (fahrzeug["id"], a["aufgabe"]),
+        ).fetchone()[0]
+        punkt = dict(a) | {"name": a["aufgabe"], "letzte": letzte, "anzahl": anzahl}
         punkt |= faelligkeit(
             a["intervall_zaehler"], a["intervall_monate"], letzte, fahrzeug["stand"], fahrzeug["einheit"], heute
         )

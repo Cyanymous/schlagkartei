@@ -119,6 +119,11 @@ def test_wartungsplan_und_uebersicht(client):
     client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2021-07-29", "art": "Ölwechsel", "zaehlerstand": "1.327"})
     client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-01-18", "art": "Zählerstand", "zaehlerstand": "1.500"})
 
+    seite = client.get("/fuhrpark/fahrzeuge/1").text
+    assert "✓ 29.07.2021" in seite
+    assert "bei 1.327 h" in seite
+    assert "überfällig</span>" in seite
+
     uebersicht = client.get("/fuhrpark").text
     assert "bei 1.477 h (23 h überfällig)" in uebersicht
     assert 'class="menuezahl"' in uebersicht

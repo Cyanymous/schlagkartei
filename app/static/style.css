@@ -747,6 +747,17 @@ li.ereignis {
 .ampel-gruen { background: var(--ok-bg); color: var(--primary-dark); }
 .ampel-grau { background: var(--chip-bg); color: var(--muted); }
 
+.erledigt {
+  color: var(--primary-dark);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ampel + small.unterzeile {
+  margin-top: 0.2rem;
+  color: var(--text);
+}
+
 .faelligkeit + .faelligkeit {
   margin-top: 0.3rem;
 }
