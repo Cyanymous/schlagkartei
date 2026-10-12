@@ -115,16 +115,26 @@ wird gezielt eingesetzt, wo es die Bedienung spürbar verbessert, vor allem
 auf dem Handy: Erfassen ohne Neuladen, Felder je nach Auswahl ein- und
 ausblenden, Ergebnisse sofort anzeigen (z. B. Liter aus Prozent).
 
-- Kein npm, kein Build-Schritt, keine Ressourcen von CDNs. Bibliotheken
-  liegen als einzelne Dateien mit Versionsnummer im Namen in `app/static/`.
+- Keine Ressourcen von CDNs: Die App läuft im internen Netz und muss ohne
+  Internet funktionieren. Bibliotheken liegen als einzelne Dateien mit
+  Versionsnummer im Namen in `app/static/`.
+- npm und ein Build-Schritt sind seit 12.10.2026 kein Ausschlusskriterium
+  mehr, werden aber erst mit konkretem Bedarf und nach Rückfrage eingeführt.
+  HTMX und Alpine.js brauchen beides nicht.
 - Eigener Code steht in `app/static/app.js`, nicht verstreut in Templates.
 - Der Server bleibt maßgeblich: Alles, was gespeichert wird, prüft und
   berechnet Python. JavaScript zeigt Ergebnisse und Warnungen nur vorab an.
 - Formulare speichern auch ohne JavaScript; JavaScript macht die Seiten
   bequemer, nicht erst benutzbar.
 - Neue Bibliotheken nur nach Rückfrage (wie alle Abhängigkeiten).
-- Framework: **offen**, Vorschlag HTMX + Alpine.js (Entscheidung des
-  Betreibers steht aus).
+- **Framework: HTMX + Alpine.js** (entschieden 12.10.2026). HTMX lädt
+  Seitenteile vom Server nach; die Logik bleibt in Python und die
+  zurückgegebenen HTML-Stücke sind mit pytest testbar. Alpine.js übernimmt
+  kleine Abläufe nur im Browser (Felder ein- und ausblenden, sofort
+  rechnen). Jede Bibliothek wird erst eingebunden, wenn eine Seite sie
+  braucht. Gegen React, Vue oder Svelte spricht nicht mehr npm, sondern
+  der Umfang: Sie würden die servergerenderten Seiten durch eine zweite
+  Oberflächenschicht ersetzen.
 
 ### Vorgeschlagene Struktur
 

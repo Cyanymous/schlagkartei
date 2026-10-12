@@ -27,10 +27,11 @@ heutigen Bedarf.
 - Python 3.12+, FastAPI, Uvicorn, Jinja2
 - SQLite über `sqlite3` aus der Standardbibliothek, reines SQL, kein ORM
 - Schemaänderungen als nummerierte Dateien in `migrations/`
-- JavaScript gezielt dort, wo es die Bedienung verbessert (SPEC.md
-  Abschnitt 4, „JavaScript“): eigener Code in `app/static/app.js`,
-  Bibliotheken als lokale Dateien; der Server prüft und berechnet alles,
-  was gespeichert wird; Formulare funktionieren auch ohne JavaScript
+- JavaScript mit HTMX + Alpine.js gezielt dort, wo es die Bedienung
+  verbessert (SPEC.md Abschnitt 4, „JavaScript“): eigener Code in
+  `app/static/app.js`, Bibliotheken als lokale Dateien; der Server prüft und
+  berechnet alles, was gespeichert wird; Formulare funktionieren auch ohne
+  JavaScript
 - Tests: pytest
 
 ## Befehle
@@ -55,7 +56,8 @@ Sobald vorhanden, hier aktuell halten:
 - Importierte und eigene Daten in getrennten Tabellen halten.
 - Jede Anwendung hat die Spalten `betrieb` und `quelle`.
 - Keine neuen Abhängigkeiten ohne Rückfrage.
-- Kein npm, kein JavaScript-Build, keine Ressourcen von CDNs.
+- Keine Ressourcen von CDNs. npm und ein JavaScript-Build sind erlaubt, aber
+  nur mit konkretem Bedarf und nach Rückfrage (Stand 12.10.2026).
 - Keine echten Betriebsdaten ins Repo: `exports/` und `data/` sind in der
   `.gitignore` und bleiben dort.
 - Änderungen am Importer immer mit Test gegen die Fixtures.
