@@ -105,9 +105,26 @@ Web-Oberfläche (Browser im Hofnetz)
 - Python 3.12+, FastAPI, Uvicorn
 - SQLite über das `sqlite3`-Modul der Standardbibliothek, reines SQL, kein ORM
 - Servergerenderte HTML-Seiten mit Jinja2
-- Optional HTMX als einzelne, lokal abgelegte Datei (kein CDN, kein npm, kein
-  Build-Schritt)
+- JavaScript nach den Regeln unten
 - Tests mit pytest
+
+### JavaScript
+
+Entschieden am 12.10.2026; vorher galt „JavaScript nur sparsam“. JavaScript
+wird gezielt eingesetzt, wo es die Bedienung spürbar verbessert, vor allem
+auf dem Handy: Erfassen ohne Neuladen, Felder je nach Auswahl ein- und
+ausblenden, Ergebnisse sofort anzeigen (z. B. Liter aus Prozent).
+
+- Kein npm, kein Build-Schritt, keine Ressourcen von CDNs. Bibliotheken
+  liegen als einzelne Dateien mit Versionsnummer im Namen in `app/static/`.
+- Eigener Code steht in `app/static/app.js`, nicht verstreut in Templates.
+- Der Server bleibt maßgeblich: Alles, was gespeichert wird, prüft und
+  berechnet Python. JavaScript zeigt Ergebnisse und Warnungen nur vorab an.
+- Formulare speichern auch ohne JavaScript; JavaScript macht die Seiten
+  bequemer, nicht erst benutzbar.
+- Neue Bibliotheken nur nach Rückfrage (wie alle Abhängigkeiten).
+- Framework: **offen**, Vorschlag HTMX + Alpine.js (Entscheidung des
+  Betreibers steht aus).
 
 ### Vorgeschlagene Struktur
 
@@ -121,7 +138,7 @@ app/
   importer.py      Einlesen und Normalisieren der Exporte
   queries.py       SQL-Abfragen für die Übersicht
   templates/       Jinja2-Templates
-  static/          CSS, ggf. htmx.min.js
+  static/          CSS, app.js, JavaScript-Bibliotheken als lokale Dateien
 migrations/
   001_initial.sql  nummerierte SQL-Dateien, beim Start angewendet
 tests/
