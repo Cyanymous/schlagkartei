@@ -11,10 +11,9 @@ Vollständige Anforderungen: @SPEC.md. Bei Widerspruch gilt SPEC.md.
 ## Aktueller Stand
 
 Stufe 1 (Import, Übersicht mit Filtern, CSV-Export, Notizen) ist fertig.
-Stufe 2 (Schlagkartei, SPEC.md Abschnitt 12) ist gebaut, die Prüfung durch
-den Betreiber steht aus. Gebaut wird jetzt der **Fuhrpark** (SPEC.md
-Abschnitt 13) in derselben App. Nichts aus Stufe 3 umsetzen, auch nicht
-vorbereitend.
+Stufe 2 (Schlagkartei, SPEC.md Abschnitt 12) und der **Fuhrpark** (SPEC.md
+Abschnitt 13, eigener Teil derselben App) sind gebaut, die Prüfung durch den
+Betreiber steht aus. Nichts aus Stufe 3 umsetzen, auch nicht vorbereitend.
 
 ## Oberstes Ziel: Einfachheit
 

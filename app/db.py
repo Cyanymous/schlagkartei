@@ -30,7 +30,8 @@ BACKUPS_BEHALTEN = 30
 def taegliche_sicherung(db_path: str, heute: date | None = None) -> None:
     """Legt einmal am Tag eine Kopie der Datenbank in backup/ neben der Datenbank an.
 
-    Seit Stufe 2 stehen Schläge, Anbau und Feldarbeiten nur in der Datenbank.
+    Seit Stufe 2 stehen Schläge, Anbau, Feldarbeiten und der Fuhrpark nur in
+    der Datenbank.
     Die Kopie schützt vor versehentlichem Löschen in der App; die
     Serversicherung von data/ ersetzt sie nicht.
     """

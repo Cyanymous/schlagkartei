@@ -65,6 +65,37 @@ sie stehen auch noch in einer anderen Datei im Ordner.
   gängigen Ackerkulturen. Kulturen aus den PSM-DOK-Exporten kommen beim
   Import automatisch dazu. „mehrjährig“ für Dauerkulturen wie Spargel.
 
+### Fuhrpark
+
+- **Fuhrpark** (`/fuhrpark`): alle aktiven Fahrzeuge mit aktuellem Stand
+  und allen Fälligkeiten (Wartung und TÜV) als Ampel – rot überfällig,
+  gelb bald fällig (weniger als 10 % des Intervalls oder 30 Tage übrig),
+  grün in Ordnung, grau noch nie erledigt oder Zählerstand fehlt. Das
+  Dringendste steht oben; die rote Zahl im Menü zählt alles Überfällige.
+  Unten „Neues Fahrzeug anlegen“ (auch Geräte wie Kompressor oder
+  Spargelschäler, Anhänger ohne Zähler und Tanks).
+- **Erfassen** (`/fuhrpark/erfassen`, auch auf dem Handy): „Tanken“ mit
+  Zählerstand und wie viel Prozent vom Tank getankt wurde (Voreinstellung
+  90 %); die App rechnet die Liter aus der Tankgröße. An der Tankstelle
+  stattdessen die genauen Liter vom Beleg eintragen, sie haben Vorrang.
+  „Sonstiger Eintrag“ für Zählerstände, Ölwechsel, Reparaturen usw.
+  Zählerstände dürfen mit Tausenderpunkt getippt werden (150.637).
+- **Aktueller Stand**: immer der Zählerstand des neuesten Eintrags, der
+  einen hat – er wird nie von Hand gepflegt. Ist ein neuer Stand kleiner
+  als ein früherer, wird er gespeichert, aber die App weist darauf hin.
+- **Fahrzeug-Seite**: Stammdaten (Kennzeichen, Ölfilter, Tankgröße, TÜV),
+  Wartungsplan und Fahrzeugbuch. Eine Wartungsaufgabe hat ein Intervall
+  als Zählerwert, in Monaten oder beides (es gilt, was zuerst kommt).
+  **Erledigt ist sie durch einen Eintrag, dessen Art genau so heißt wie
+  die Aufgabe** (z. B. „Ölwechsel“, mit Zählerstand). Beim Umbenennen
+  einer Aufgabe werden diese Einträge mit umbenannt. Der TÜV steht als
+  Monat der Plakette in den Stammdaten; nach der Prüfung den neuen Monat
+  eintragen, leer heißt kein TÜV. Fahrzeuge werden nicht gelöscht,
+  sondern auf „inaktiv“ gesetzt.
+- **Fahrzeugbuch** (`/fuhrpark/buch`): alle Einträge mit Filter nach Jahr,
+  Fahrzeug und Art, Summe der Liter (≈ = geschätzt) und CSV-Export.
+  Eintrag anklicken zum Bearbeiten oder Löschen.
+
 ### Pflanzenschutz (PSM-DOK)
 
 - **Pflanzenschutz** (`/`): Tabelle aller Anwendungen, neueste
@@ -92,8 +123,8 @@ Die Oberfläche folgt automatisch der Hell/Dunkel-Einstellung des Geräts.
 - `exports/` enthält die Original-Exporte – der rechtlich maßgebliche
   Bestand. Unbedingt sichern.
 - `data/` enthält die Datenbank. Die importierten Daten ließen sich aus
-  `exports/` neu einlesen, **Schläge, Anbauplan, Feldarbeiten, Kulturen und
-  Notizen aber nicht**. Deshalb `data/` ebenfalls sichern. Ein Neustart oder
+  `exports/` neu einlesen, **Schläge, Anbauplan, Feldarbeiten, Kulturen,
+  Notizen und der Fuhrpark aber nicht**. Deshalb `data/` ebenfalls sichern. Ein Neustart oder
   Neubau des Containers lässt beide Ordner unangetastet.
 - Zusätzlich legt die App einmal am Tag eine Kopie der Datenbank in
   `data/backup/` ab (die letzten 30 Tage). Wiederherstellen: Container

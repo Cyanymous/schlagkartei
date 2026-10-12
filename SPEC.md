@@ -1,6 +1,6 @@
 # Schlagkartei – Spezifikation
 
-Stand: 12.10.2026 · Status: Stufe 1 umgesetzt, Stufe 2 umgesetzt (Prüfung offen), Fuhrpark in Arbeit
+Stand: 12.10.2026 · Status: Stufe 1 umgesetzt, Stufe 2 und Fuhrpark umgesetzt (Prüfung offen)
 
 ## 1. Ziel
 
@@ -31,7 +31,7 @@ weniger beweglichen Teilen.
 | 1 | Import der PSM-DOK-Exporte, Gesamtübersicht mit Filtern, CSV-Export, Notizen je Anwendung | fertig |
 | 2 | Schlagkartei: Schläge, Kulturen mit EPPO-Code, Anbau/Fruchtfolge mit Planung, Feldarbeiten, einfache Auswertungen (Abschnitt 12) | **jetzt** |
 | 3 | Eigene Eingabemaske als Ersatz für PSM-DOK (volle Schlagkartei) | später |
-| – | Fuhrpark: Fahrzeuge, Fahrzeugbuch, Wartungsfälligkeiten, TÜV (Abschnitt 13) | **jetzt** |
+| – | Fuhrpark: Fahrzeuge, Fahrzeugbuch, Wartungsfälligkeiten, TÜV (Abschnitt 13) | umgesetzt, Prüfung offen |
 
 Notizen je Anwendung wurden am 06.10.2026 auf Wunsch des Betreibers aus
 Stufe 2 in Stufe 1 vorgezogen.
