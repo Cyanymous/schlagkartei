@@ -9,6 +9,8 @@
 *.db-journal
 *.db-wal
 *.db-shm
+# Fuhrpark-Tabelle des Betreibers (Kennzeichen, Namen); nur Vorlage, kein Fixture
+/tests/fixtures/Fahrzeuge und Maschinen.ods
 
 # --- Umgebung / Zugangsdaten ---
 .env

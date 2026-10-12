@@ -1,6 +1,6 @@
 # Schlagkartei – Spezifikation
 
-Stand: 06.10.2026 · Status: Stufe 1 umgesetzt, Stufe 2 in Arbeit
+Stand: 12.10.2026 · Status: Stufe 1 umgesetzt, Stufe 2 umgesetzt (Prüfung offen), Fuhrpark in Arbeit
 
 ## 1. Ziel
 
@@ -31,9 +31,15 @@ weniger beweglichen Teilen.
 | 1 | Import der PSM-DOK-Exporte, Gesamtübersicht mit Filtern, CSV-Export, Notizen je Anwendung | fertig |
 | 2 | Schlagkartei: Schläge, Kulturen mit EPPO-Code, Anbau/Fruchtfolge mit Planung, Feldarbeiten, einfache Auswertungen (Abschnitt 12) | **jetzt** |
 | 3 | Eigene Eingabemaske als Ersatz für PSM-DOK (volle Schlagkartei) | später |
+| – | Fuhrpark: Fahrzeuge, Fahrzeugbuch, Wartungsfälligkeiten, TÜV (Abschnitt 13) | **jetzt** |
 
 Notizen je Anwendung wurden am 06.10.2026 auf Wunsch des Betreibers aus
 Stufe 2 in Stufe 1 vorgezogen.
+
+Der Fuhrpark ist keine Ausbaustufe der Schlagkartei, sondern ein eigener
+Teil derselben Anwendung (gleicher Container, gleiche Datenbank). Er wird auf
+Wunsch des Betreibers vom 12.10.2026 gebaut, obwohl die Prüfung von Stufe 2
+noch aussteht.
 
 Es wird immer nur die aktuelle Stufe gebaut. Spätere Stufen beeinflussen das
 Datenmodell (siehe Abschnitt 5), aber es entsteht kein Code "auf Vorrat".
@@ -390,3 +396,80 @@ Regel 2); `data/` ist damit der einzige Ort, an dem sie stehen.
 
 - Keine Düngedokumentation, kein Ertrag, keine Karten (später möglich)
 - Weiterhin kein Login, keine Eingabe von PSM-Anwendungen
+
+## 13. Fuhrpark
+
+Entschieden am 12.10.2026. Ersetzt die Tabelle „Fahrzeuge und Maschinen.ods“
+des Betreibers (Blätter Wartung, Tanken, Fahrzeuge, Maschinen und Geräte).
+Alle Tabellen sind eigene Daten (Abschnitt 5, Regel 2). Die Tabelle selbst ist
+nur Vorlage, enthält echte Daten und liegt deshalb nicht im Repo
+(`.gitignore`). Der Betreiber überträgt den Bestand nach dem Bau von Hand; es
+gibt kein Übernahmeskript.
+
+### Fachliche Entscheidungen
+
+- **Fahrzeuge:** Schlepper, PKW, Anhänger, Geräte (Kompressor,
+  Spargelschälautomat) und Tanks (Dieseltank, Benzintank) stehen in einer
+  gemeinsamen Liste. Keine Zuordnung zu einem Betrieb, der Fuhrpark ist
+  gemeinsam. Fahrzeuge werden nicht gelöscht, sondern auf inaktiv gesetzt.
+- **Zählereinheit je Fahrzeug:** h, km, Stück oder keine.
+- **Aktueller Stand** ist immer der Zählerstand des neuesten Eintrags im
+  Fahrzeugbuch, der einen Zählerstand hat (nach Datum). Er wird nie von Hand
+  gepflegt; in der Tabelle war genau dieser Wert regelmäßig veraltet.
+- **Fahrzeugbuch:** ein Verlauf je Fahrzeug. Jeder Eintrag hat Datum, Art
+  (freier Text mit Vorschlägen, z. B. Tanken, Zählerstand, Ölwechsel,
+  Inspektion, Reparatur, TÜV), optional Zählerstand, Liter, Belegnummer und
+  Bemerkung.
+- **Tanken ohne Messuhr:** Der Hoftank hat keine Messuhr. Jedes Fahrzeug hat
+  deshalb in den Stammdaten eine Tankgröße in Litern. Beim Tanken wählt der
+  Betreiber, zu wie viel Prozent der Tankgröße er getankt hat (10 % bis
+  100 % in 10er-Schritten, Voreinstellung 90 %). Die App rechnet daraus die
+  Liter und speichert sie als Schätzung zusammen mit dem Prozentwert; eine
+  spätere Änderung der Tankgröße ändert alte Einträge nicht. An der
+  Tankstelle können stattdessen die genauen Liter vom Beleg eingetragen
+  werden; genaue Liter haben Vorrang vor dem Prozentwert.
+- **Zählerstände** werden wie in der Tabelle gewohnt mit Tausenderpunkt
+  angenommen (150.637). Ist ein Stand kleiner als ein früherer, wird er
+  trotzdem gespeichert (Zähler können getauscht werden), aber die App weist
+  darauf hin.
+- **Wartungsplan:** je Fahrzeug beliebig viele Aufgaben (z. B. Ölwechsel,
+  Messerwechsel) mit einem Intervall als Zählerwert, in Monaten oder beidem
+  („was zuerst kommt“). Erledigt ist eine Aufgabe durch einen Eintrag im
+  Fahrzeugbuch, dessen Art gleich dem Namen der Aufgabe ist. Die nächste
+  Fälligkeit rechnet die App aus dem letzten solchen Eintrag. Wird eine
+  Aufgabe umbenannt, ändert die App die Art der passenden Einträge dieses
+  Fahrzeugs mit, damit die Verbindung erhalten bleibt.
+- **TÜV:** nur bestimmte Fahrzeuge. Er steht als Fälligkeit (Monat und Jahr
+  der Plakette) in den Stammdaten; leer heißt kein TÜV. Nach der Prüfung
+  trägt der Betreiber die neue Fälligkeit ein.
+- **Ampel:** rot = überfällig, gelb = bald fällig (weniger als 10 % des
+  Zählerintervalls oder weniger als 30 Tage übrig), grün = in Ordnung, grau
+  = noch nie erledigt oder Zählerstand fehlt.
+
+### Tabellen
+
+- `fahrzeuge`: Name (eindeutig), Typ/Serie, Kennzeichen, Ölfilter,
+  Zählereinheit, Tankgröße in Litern, TÜV fällig (JJJJ-MM), Bemerkung, aktiv.
+- `fahrzeug_eintraege`: Fahrzeug, Datum, Art, Zählerstand, Liter, Prozent
+  (nur bei geschätzter Tankmenge), Belegnummer, Bemerkung.
+- `wartungsaufgaben`: Fahrzeug, Aufgabe, Intervall Zähler, Intervall Monate.
+
+### Oberfläche
+
+1. **Fuhrpark (Übersicht):** eine Zeile je aktivem Fahrzeug mit aktuellem
+   Stand (und Datum der Ablesung) und den Fälligkeiten mit Ampel,
+   Dringendstes zuerst. Im Menü steht die Zahl der überfälligen Punkte.
+2. **Erfassen:** handytaugliche Seite mit zwei Formularen: „Tanken“
+   (Fahrzeug, Datum, Zählerstand, Prozent oder genaue Liter, Beleg) und
+   „Sonstiger Eintrag“ (Fahrzeug, Datum, Art, Zählerstand, Bemerkung).
+3. **Fahrzeugseite:** Stammdaten bearbeiten, Wartungsplan pflegen,
+   Fahrzeugbuch des Fahrzeugs, Einträge bearbeiten und löschen.
+4. **Fahrzeugbuch:** Liste aller Einträge mit Filter nach Jahr, Fahrzeug und
+   Art; CSV-Export.
+
+### Nicht-Ziele
+
+- Kein Filter- oder Teilelager (vorerst; die Ölfilter-Nummer steht in den
+  Stammdaten)
+- Keine Verbrauchsauswertung, keine Kosten, keine Erinnerungen per Mail
+- Keine Verknüpfung von Feldarbeiten mit Maschinen
