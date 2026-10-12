@@ -27,9 +27,11 @@ def test_fahrzeug_anlegen_und_bearbeiten(client):
     r = client.post(
         "/fuhrpark/fahrzeuge/1",
         data={"name": "JD 5720", "einheit": "h", "tank_liter": "120", "kennzeichen": "HVL X 1",
-              "tuev_faellig": "2027-03", "aktiv": "1"},
+              "tuev_faellig": "2027-03", "aktiv": "1", "modell": "5720 Premium", "seriennummer": "L05720X123",
+              "baujahr": "2008"},
     )
     assert "HVL X 1" in r.text
+    assert "5720 Premium" in r.text and "L05720X123" in r.text and "2008" in r.text
     assert "03/2027" in r.text
 
     liste = client.get("/fuhrpark").text

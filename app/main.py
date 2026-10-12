@@ -578,9 +578,10 @@ def feldarbeiten_csv(request: Request) -> StreamingResponse:
 def _fahrzeug_daten(f: dict[str, list[str]], neu: bool) -> dict:
     daten = {
         name: _feld(f, name)
-        for name in ["name", "typ", "kennzeichen", "oelfilter", "einheit", "tuev_faellig", "bemerkung"]
+        for name in ["name", "modell", "seriennummer", "kennzeichen", "oelfilter", "einheit", "tuev_faellig", "bemerkung"]
     }
     daten["tank_liter"] = _zahl(_feld(f, "tank_liter"))
+    daten["baujahr"] = _jahr(_feld(f, "baujahr"), 0) or None
     # Beim Anlegen gibt es kein Häkchen „aktiv“; neue Fahrzeuge sind immer aktiv.
     daten["aktiv"] = neu or _feld(f, "aktiv") == "1"
     return daten

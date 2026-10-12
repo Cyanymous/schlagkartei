@@ -7,7 +7,9 @@
 <section class="karte">
   <dl class="steckbrief">
     <div><dt>Aktueller Stand</dt><dd>{% if fahrzeug.stand is not none %}{{ fahrzeug.stand | zahl }} {{ fahrzeug.einheit }} <small class="hinweis">am {{ fahrzeug.stand_datum | datum_de }}</small>{% elif fahrzeug.einheit %}noch nicht erfasst{% else %}kein Zähler{% endif %}</dd></div>
-    <div><dt>Typ / Serie</dt><dd>{{ fahrzeug.typ or "–" }}</dd></div>
+    <div><dt>Modell / Beschreibung</dt><dd>{{ fahrzeug.modell or "–" }}</dd></div>
+    <div><dt>Fahrgestell- / Seriennummer</dt><dd>{{ fahrzeug.seriennummer or "–" }}</dd></div>
+    <div><dt>Baujahr</dt><dd>{{ fahrzeug.baujahr or "–" }}</dd></div>
     <div><dt>Kennzeichen</dt><dd>{{ fahrzeug.kennzeichen or "–" }}</dd></div>
     <div><dt>Ölfilter</dt><dd>{{ fahrzeug.oelfilter or "–" }}</dd></div>
     <div><dt>Tankgröße</dt><dd>{% if fahrzeug.tank_liter %}{{ fahrzeug.tank_liter | ha }} L{% else %}–{% endif %}</dd></div>
@@ -86,7 +88,11 @@
   <form method="post" action="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}">
     <div class="formzeile">
       <label>Name <input name="name" value="{{ fahrzeug.name }}" required></label>
-      <label>Typ / Serie <input name="typ" value="{{ fahrzeug.typ or '' }}"></label>
+      <label class="breit">Modell / Beschreibung <input name="modell" value="{{ fahrzeug.modell or '' }}" placeholder="z. B. HPX 4x4 Diesel 13,6 kW"></label>
+    </div>
+    <div class="formzeile">
+      <label>Fahrgestell- / Seriennummer <input name="seriennummer" value="{{ fahrzeug.seriennummer or '' }}" size="20"></label>
+      <label>Baujahr <input name="baujahr" inputmode="numeric" size="5" value="{{ fahrzeug.baujahr or '' }}"></label>
       <label>Kennzeichen <input name="kennzeichen" value="{{ fahrzeug.kennzeichen or '' }}" size="12"></label>
       <label>Ölfilter <input name="oelfilter" value="{{ fahrzeug.oelfilter or '' }}" size="14"></label>
     </div>

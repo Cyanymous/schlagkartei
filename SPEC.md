@@ -448,8 +448,11 @@ gibt kein Übernahmeskript.
 
 ### Tabellen
 
-- `fahrzeuge`: Name (eindeutig), Typ/Serie, Kennzeichen, Ölfilter,
-  Zählereinheit, Tankgröße in Litern, TÜV fällig (JJJJ-MM), Bemerkung, aktiv.
+- `fahrzeuge`: Name (eindeutig), Modell/Beschreibung, Fahrgestell- bzw.
+  Seriennummer, Baujahr, Kennzeichen, Ölfilter, Zählereinheit, Tankgröße in
+  Litern, TÜV fällig (JJJJ-MM), Bemerkung, aktiv. (Bis 12.10.2026 gab es nur
+  ein Feld „Typ/Serie“; in der Tabelle stand dort eine Beschreibung, keine
+  Seriennummer, deshalb wurde es aufgeteilt.)
 - `fahrzeug_eintraege`: Fahrzeug, Datum, Art, Zählerstand, Liter, Prozent
   (nur bei geschätzter Tankmenge), Belegnummer, Bemerkung.
 - `wartungsaufgaben`: Fahrzeug, Aufgabe, Intervall Zähler, Intervall Monate.

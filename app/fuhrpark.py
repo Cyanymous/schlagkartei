@@ -53,6 +53,8 @@ def save_fahrzeug(conn: sqlite3.Connection, fahrzeug_id: int | None, daten: dict
         return None, "Unbekannte Zählereinheit."
     if werte.get("tank_liter") is not None and werte["tank_liter"] <= 0:
         return None, "Die Tankgröße muss größer als 0 sein."
+    if werte.get("baujahr") is not None and not 1900 <= werte["baujahr"] <= date.today().year + 1:
+        return None, "Bitte ein gültiges Baujahr angeben."
     if werte.get("tuev_faellig") and not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", werte["tuev_faellig"]):
         return None, "Bitte die TÜV-Fälligkeit als Monat angeben."
     vorhanden = conn.execute(
@@ -61,7 +63,10 @@ def save_fahrzeug(conn: sqlite3.Connection, fahrzeug_id: int | None, daten: dict
     if vorhanden:
         return None, f"Das Fahrzeug „{werte['name']}“ gibt es schon."
 
-    spalten = ["name", "typ", "kennzeichen", "oelfilter", "einheit", "tank_liter", "tuev_faellig", "bemerkung", "aktiv"]
+    spalten = [
+        "name", "modell", "seriennummer", "baujahr", "kennzeichen", "oelfilter",
+        "einheit", "tank_liter", "tuev_faellig", "bemerkung", "aktiv",
+    ]
     parameter = [werte.get(s) for s in spalten]
     parameter[-1] = int(werte.get("aktiv", True))
     if fahrzeug_id is None:

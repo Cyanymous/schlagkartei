@@ -23,10 +23,11 @@ def _fahrzeug(conn, name="JD 5720", **daten):
 
 
 def test_fahrzeug_anlegen_und_aendern(conn):
-    fahrzeug_id = _fahrzeug(conn, kennzeichen=" HVL X 1 ", typ="")
+    fahrzeug_id = _fahrzeug(conn, kennzeichen=" HVL X 1 ", modell="", seriennummer="L05720X123", baujahr=2008)
     f = fp.get_fahrzeug(conn, fahrzeug_id)
     assert f["kennzeichen"] == "HVL X 1"
-    assert f["typ"] is None
+    assert f["modell"] is None
+    assert (f["seriennummer"], f["baujahr"]) == ("L05720X123", 2008)
     assert f["aktiv"] == 1
 
     _, fehler = fp.save_fahrzeug(conn, fahrzeug_id, {"name": "JD 5720 R", "einheit": "", "aktiv": False})
@@ -50,6 +51,7 @@ def test_fahrzeugname_ist_eindeutig(conn):
         ({"name": "X", "einheit": "Meilen"}, "Zählereinheit"),
         ({"name": "X", "tank_liter": 0.0}, "Tankgröße"),
         ({"name": "X", "tuev_faellig": "2026-13"}, "TÜV"),
+        ({"name": "X", "baujahr": 1850}, "Baujahr"),
     ],
 )
 def test_fahrzeug_ungueltige_eingaben(conn, daten, meldung):
