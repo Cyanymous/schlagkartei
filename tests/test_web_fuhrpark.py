@@ -108,3 +108,32 @@ def test_warnung_bei_kleinerem_zaehlerstand(client):
     r = client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-06-01", "art": "Zählerstand", "zaehlerstand": "441"})
     assert "kleiner als am 12.05.2026" in r.text
     assert "441 h" in r.text  # trotzdem gespeichert
+
+
+def test_wartungsplan_und_uebersicht(client):
+    _fahrzeug_anlegen(client, "Ford 6410")
+    r = client.post("/fuhrpark/fahrzeuge/1/aufgaben", data={"aufgabe": "Ölwechsel", "intervall_zaehler": "150"})
+    assert "alle 150 h" in r.text
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2021-07-29", "art": "Ölwechsel", "zaehlerstand": "1.327"})
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-01-18", "art": "Zählerstand", "zaehlerstand": "1.500"})
+
+    uebersicht = client.get("/fuhrpark").text
+    assert "bei 1.477 h (23 h überfällig)" in uebersicht
+    assert 'class="menuezahl"' in uebersicht
+
+    r = client.post("/fuhrpark/fahrzeuge/1/aufgaben/1", data={"aufgabe": "Motoröl", "intervall_zaehler": "150"})
+    assert "Motoröl" in r.text
+    assert "29.07.2021" in r.text  # Eintrag hängt weiter an der Aufgabe
+
+    r = client.post("/fuhrpark/fahrzeuge/1/aufgaben/1/loeschen")
+    assert "Noch keine Wartungsaufgaben." in r.text
+    assert 'class="menuezahl"' not in r.text
+
+
+def test_erfassen_zeigt_letzten_stand_und_90_prozent(client):
+    _fahrzeug_anlegen(client)
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-01-18", "art": "Zählerstand", "zaehlerstand": "3.054"})
+    seite = client.get("/fuhrpark/erfassen?fahrzeug=1").text
+    assert "zuletzt 3.054 h" in seite
+    assert '<option value="90" selected>' in seite
+    assert 'name="zurueck" value="/fuhrpark/fahrzeuge/1"' in seite

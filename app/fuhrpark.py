@@ -1,5 +1,6 @@
 """SQL für den Fuhrpark (SPEC.md Abschnitt 13): Fahrzeuge, Fahrzeugbuch, Wartung."""
 
+import calendar
 import re
 import sqlite3
 from datetime import date
@@ -202,3 +203,175 @@ def zaehlerstand_hinweis(conn: sqlite3.Connection, eintrag_id: int) -> str | Non
 def delete_eintrag(conn: sqlite3.Connection, eintrag_id: int) -> None:
     conn.execute("DELETE FROM fahrzeug_eintraege WHERE id = ?", (eintrag_id,))
     conn.commit()
+
+
+# --- Wartungsplan -----------------------------------------------------------
+
+# Gelb, sobald weniger als 10 % des Zählerintervalls oder weniger als 30 Tage übrig sind.
+BALD_ANTEIL = 0.1
+BALD_TAGE = 30
+# Dringendstes zuerst; grau (nie erledigt, Stand fehlt) braucht eher Aufmerksamkeit als grün.
+DRINGLICHKEIT = {"rot": 0, "gelb": 1, "grau": 2, "gruen": 3}
+
+
+def get_aufgaben(conn: sqlite3.Connection, fahrzeug_id: int) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM wartungsaufgaben WHERE fahrzeug_id = ? ORDER BY aufgabe", (fahrzeug_id,)
+    ).fetchall()
+
+
+def save_aufgabe(
+    conn: sqlite3.Connection,
+    fahrzeug_id: int,
+    aufgabe_id: int | None,
+    aufgabe: str,
+    intervall_zaehler: float | None,
+    intervall_monate: float | None,
+) -> str | None:
+    """Legt eine Wartungsaufgabe an (aufgabe_id None) oder ändert sie."""
+    fahrzeug = get_fahrzeug(conn, fahrzeug_id)
+    aufgabe = aufgabe.strip()
+    if fahrzeug is None:
+        return "Fahrzeug nicht gefunden."
+    if not aufgabe:
+        return "Bitte die Aufgabe benennen, z. B. Ölwechsel."
+    if intervall_zaehler is None and intervall_monate is None:
+        return "Bitte ein Intervall angeben (Zählerstand, Monate oder beides)."
+    if intervall_zaehler is not None and not fahrzeug["einheit"]:
+        return f"„{fahrzeug['name']}“ hat keinen Zähler; bitte das Intervall in Monaten angeben."
+    if (intervall_zaehler is not None and intervall_zaehler <= 0) or (
+        intervall_monate is not None and (intervall_monate <= 0 or intervall_monate != int(intervall_monate))
+    ):
+        return "Intervalle müssen größer als 0 sein, Monate eine ganze Zahl."
+    if conn.execute(
+        "SELECT 1 FROM wartungsaufgaben WHERE fahrzeug_id = ? AND aufgabe = ? AND id IS NOT ?",
+        (fahrzeug_id, aufgabe, aufgabe_id),
+    ).fetchone():
+        return f"Die Aufgabe „{aufgabe}“ gibt es für dieses Fahrzeug schon."
+
+    monate = int(intervall_monate) if intervall_monate is not None else None
+    if aufgabe_id is None:
+        conn.execute(
+            """INSERT INTO wartungsaufgaben (fahrzeug_id, aufgabe, intervall_zaehler, intervall_monate)
+               VALUES (?, ?, ?, ?)""",
+            (fahrzeug_id, aufgabe, intervall_zaehler, monate),
+        )
+    else:
+        alt = conn.execute("SELECT aufgabe FROM wartungsaufgaben WHERE id = ?", (aufgabe_id,)).fetchone()
+        # Erledigt-Einträge finden ihre Aufgabe über den Namen; beim Umbenennen
+        # ziehen sie mit, sonst stünde die Aufgabe wieder auf „nie erledigt“.
+        if alt and alt["aufgabe"] != aufgabe:
+            conn.execute(
+                "UPDATE fahrzeug_eintraege SET art = ? WHERE fahrzeug_id = ? AND art = ?",
+                (aufgabe, fahrzeug_id, alt["aufgabe"]),
+            )
+        conn.execute(
+            "UPDATE wartungsaufgaben SET aufgabe = ?, intervall_zaehler = ?, intervall_monate = ? WHERE id = ?",
+            (aufgabe, intervall_zaehler, monate, aufgabe_id),
+        )
+    conn.commit()
+    return None
+
+
+def delete_aufgabe(conn: sqlite3.Connection, aufgabe_id: int) -> None:
+    conn.execute("DELETE FROM wartungsaufgaben WHERE id = ?", (aufgabe_id,))
+    conn.commit()
+
+
+def _plus_monate(tag: date, monate: int) -> date:
+    jahr, monat = divmod(tag.month - 1 + monate, 12)
+    jahr, monat = tag.year + jahr, monat + 1
+    return date(jahr, monat, min(tag.day, calendar.monthrange(jahr, monat)[1]))
+
+
+def _ampel(rest: float, bald: float) -> str:
+    if rest < 0:
+        return "rot"
+    if rest < bald:
+        return "gelb"
+    return "gruen"
+
+
+def _rest_text(rest: float, einheit: str) -> str:
+    if einheit == "Tage" and abs(rest) == 1:
+        einheit = "Tag"
+    if rest < 0:
+        return f"{zahl_de(-rest)} {einheit} überfällig"
+    return f"noch {zahl_de(rest)} {einheit}"
+
+
+def faelligkeit(
+    intervall_zaehler: float | None,
+    intervall_monate: int | None,
+    letzte: dict | None,
+    stand: float | None,
+    einheit: str | None,
+    heute: date,
+) -> dict:
+    """Nächste Fälligkeit einer Aufgabe aus dem letzten Erledigt-Eintrag.
+
+    `letzte` hat datum und zaehlerstand des letzten Eintrags mit dieser Art,
+    `stand` ist der aktuelle Zählerstand. Bei beiden Intervallen gilt, was
+    zuerst kommt: Der Status ist der dringendere der beiden.
+    """
+    if letzte is None:
+        return {"status": "grau", "text": "noch nie erledigt"}
+    stati, texte = [], []
+    if intervall_zaehler:
+        if letzte["zaehlerstand"] is None:
+            texte.append("Zählerstand beim letzten Mal fehlt")
+        else:
+            faellig_bei = letzte["zaehlerstand"] + intervall_zaehler
+            text = f"bei {zahl_de(faellig_bei)} {einheit}"
+            if stand is not None:
+                rest = faellig_bei - stand
+                stati.append(_ampel(rest, intervall_zaehler * BALD_ANTEIL))
+                text += f" ({_rest_text(rest, einheit)})"
+            texte.append(text)
+    if intervall_monate:
+        faellig_am = _plus_monate(date.fromisoformat(letzte["datum"]), intervall_monate)
+        rest_tage = (faellig_am - heute).days
+        stati.append(_ampel(rest_tage, BALD_TAGE))
+        texte.append(f"am {faellig_am:%d.%m.%Y} ({_rest_text(rest_tage, 'Tage')})")
+    status = min(stati, key=DRINGLICHKEIT.get) if stati else "grau"
+    return {"status": status, "text": " oder ".join(texte)}
+
+
+def tuev_faelligkeit(tuev_faellig: str, heute: date) -> dict:
+    """Die Plakette gilt bis zum Ende ihres Monats."""
+    jahr, monat = int(tuev_faellig[:4]), int(tuev_faellig[5:7])
+    rest_tage = (date(jahr, monat, calendar.monthrange(jahr, monat)[1]) - heute).days
+    return {"status": _ampel(rest_tage, BALD_TAGE), "text": f"{monat:02d}/{jahr} ({_rest_text(rest_tage, 'Tage')})"}
+
+
+def wartungsplan(conn: sqlite3.Connection, fahrzeug: sqlite3.Row, heute: date) -> list[dict]:
+    """Alle Fälligkeiten eines Fahrzeugs (Aufgaben und TÜV), Dringendstes zuerst."""
+    punkte = []
+    for a in get_aufgaben(conn, fahrzeug["id"]):
+        letzte = conn.execute(
+            """SELECT datum, zaehlerstand FROM fahrzeug_eintraege
+               WHERE fahrzeug_id = ? AND art = ? ORDER BY datum DESC, id DESC LIMIT 1""",
+            (fahrzeug["id"], a["aufgabe"]),
+        ).fetchone()
+        punkt = dict(a) | {"name": a["aufgabe"], "letzte": letzte}
+        punkt |= faelligkeit(
+            a["intervall_zaehler"], a["intervall_monate"], letzte, fahrzeug["stand"], fahrzeug["einheit"], heute
+        )
+        punkte.append(punkt)
+    if fahrzeug["tuev_faellig"]:
+        punkte.append({"name": "TÜV", "id": None} | tuev_faelligkeit(fahrzeug["tuev_faellig"], heute))
+    return sorted(punkte, key=lambda p: DRINGLICHKEIT[p["status"]])
+
+
+def uebersicht(conn: sqlite3.Connection, heute: date) -> list[dict]:
+    """Aktive Fahrzeuge mit ihren Fälligkeiten; Fahrzeuge mit dem dringendsten Punkt zuerst."""
+    zeilen = []
+    for f in get_fahrzeuge(conn, nur_aktive=True):
+        punkte = wartungsplan(conn, f, heute)
+        status = punkte[0]["status"] if punkte else "gruen"
+        zeilen.append({"fahrzeug": f, "punkte": punkte, "status": status})
+    return sorted(zeilen, key=lambda z: (DRINGLICHKEIT[z["status"]], z["fahrzeug"]["name"]))
+
+
+def anzahl_ueberfaellig(conn: sqlite3.Connection, heute: date) -> int:
+    return sum(p["status"] == "rot" for z in uebersicht(conn, heute) for p in z["punkte"])

@@ -9,7 +9,41 @@
   </div>
 </div>
 
-<details class="karte" {% if not fahrzeuge %}open{% endif %}>
+<div class="tabelle">
+<table class="klickbar">
+  <thead><tr><th>Fahrzeug</th><th class="zahl">Aktueller Stand</th><th>Wartung und TÜV</th></tr></thead>
+  <tbody>
+    {% for z in zeilen %}
+    {% set f = z.fahrzeug %}
+    <tr>
+      <td>
+        <a class="zeilenlink" href="/fuhrpark/fahrzeuge/{{ f.id }}">{{ f.name }}</a>
+        {% if f.kennzeichen %}<small class="unterzeile">{{ f.kennzeichen }}</small>{% endif %}
+      </td>
+      <td class="zahl">{% if f.stand is not none %}{{ f.stand | zahl }} {{ f.einheit }}<small class="unterzeile">{{ f.stand_datum | datum_de }}</small>{% elif f.einheit %}–{% endif %}</td>
+      <td>
+        {% for p in z.punkte %}
+        <div class="faelligkeit"><span class="ampel ampel-{{ p.status }}">{{ p.name }}</span> {{ p.text }}</div>
+        {% else %}
+        <span class="hinweis">kein Wartungsplan</span>
+        {% endfor %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="leer">Noch keine Fahrzeuge angelegt.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="hinweis legende">
+  <span class="ampel ampel-rot">überfällig</span>
+  <span class="ampel ampel-gelb">bald fällig</span>
+  <span class="ampel ampel-gruen">in Ordnung</span>
+  <span class="ampel ampel-grau">noch nie erledigt / Stand fehlt</span>
+  · Bald heißt: weniger als 10 % des Intervalls oder 30 Tage übrig.
+</p>
+
+<details class="karte" {% if not zeilen and not inaktive %}open{% endif %}>
   <summary>Neues Fahrzeug anlegen</summary>
   <form class="formzeile" method="post" action="/fuhrpark/fahrzeuge">
     <label>Name <input name="name" required placeholder="z. B. JD 5720"></label>
@@ -25,23 +59,12 @@
   <p class="hinweis">Kennzeichen, Ölfilter, TÜV und Wartungsplan trägst du danach auf der Seite des Fahrzeugs ein.</p>
 </details>
 
-<div class="tabelle">
-<table class="klickbar">
-  <thead><tr><th>Fahrzeug</th><th class="zahl">Aktueller Stand</th><th>Typ</th><th>Kennzeichen</th><th class="zahl">Tank (L)</th><th>TÜV</th></tr></thead>
-  <tbody>
-    {% for f in fahrzeuge %}
-    <tr {% if not f.aktiv %}class="inaktiv"{% endif %}>
-      <td><a class="zeilenlink" href="/fuhrpark/fahrzeuge/{{ f.id }}">{{ f.name }}</a>{% if not f.aktiv %} <span class="badge">inaktiv</span>{% endif %}</td>
-      <td class="zahl">{% if f.stand is not none %}{{ f.stand | zahl }} {{ f.einheit }}<small class="unterzeile">{{ f.stand_datum | datum_de }}</small>{% elif f.einheit %}–{% endif %}</td>
-      <td>{{ f.typ or "" }}</td>
-      <td class="nowrap">{{ f.kennzeichen or "" }}</td>
-      <td class="zahl">{{ f.tank_liter | ha }}</td>
-      <td>{{ f.tuev_faellig | monat_de }}</td>
-    </tr>
-    {% else %}
-    <tr><td colspan="6" class="leer">Noch keine Fahrzeuge angelegt.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
-</div>
+{% if inaktive %}
+<details class="karte">
+  <summary>Inaktive Fahrzeuge ({{ inaktive | length }})</summary>
+  <ul>
+    {% for f in inaktive %}<li><a href="/fuhrpark/fahrzeuge/{{ f.id }}">{{ f.name }}</a></li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
 {% endblock %}

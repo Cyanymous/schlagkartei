@@ -17,6 +17,62 @@
 </section>
 
 <section class="karte">
+  <h2>Wartungsplan</h2>
+  <div class="tabelle">
+  <table>
+    <thead><tr><th>Aufgabe</th><th>Intervall</th><th>Zuletzt</th><th>Nächste Fälligkeit</th><th></th></tr></thead>
+    <tbody>
+      {% for p in punkte %}
+      {% if p.id and p.id == bearbeiten %}
+      <tr class="bearbeiten">
+        <td colspan="5">
+          <form class="formzeile kompakt" method="post" action="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}/aufgaben/{{ p.id }}">
+            <input name="aufgabe" value="{{ p.name }}" required aria-label="Aufgabe" autofocus>
+            {% if fahrzeug.einheit %}alle <input name="intervall_zaehler" inputmode="decimal" size="7" value="{{ p.intervall_zaehler | zahl }}" aria-label="Intervall {{ fahrzeug.einheit }}"> {{ fahrzeug.einheit }}{% endif %}
+            {% if fahrzeug.einheit %}und/oder{% else %}alle{% endif %} <input name="intervall_monate" inputmode="numeric" size="3" value="{{ p.intervall_monate or '' }}" aria-label="Intervall Monate"> Monate
+            <button type="submit">Speichern</button>
+            <a href="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}">Abbrechen</a>
+          </form>
+          <form class="formzeile kompakt" method="post" action="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}/aufgaben/{{ p.id }}/loeschen">
+            <button type="submit" class="knopf-gefahr">Aufgabe löschen</button>
+          </form>
+          <p class="hinweis">Beim Umbenennen werden die passenden Einträge im Fahrzeugbuch mit umbenannt.</p>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td>{{ p.name }}</td>
+        <td>
+          {% if p.id %}
+          {% if p.intervall_zaehler %}alle {{ p.intervall_zaehler | zahl }} {{ fahrzeug.einheit }}{% endif %}
+          {% if p.intervall_zaehler and p.intervall_monate %} oder {% endif %}
+          {% if p.intervall_monate %}alle {{ p.intervall_monate }} Monate{% endif %}
+          {% else %}laut Plakette{% endif %}
+        </td>
+        <td>{% if p.letzte %}{{ p.letzte.datum | datum_de }}{% if p.letzte.zaehlerstand is not none %}<small class="unterzeile">bei {{ p.letzte.zaehlerstand | zahl }} {{ fahrzeug.einheit }}</small>{% endif %}{% elif p.id %}–{% endif %}</td>
+        <td><span class="ampel ampel-{{ p.status }}">{{ {"rot": "überfällig", "gelb": "bald", "gruen": "ok", "grau": "?"}[p.status] }}</span> {{ p.text }}</td>
+        <td class="aktion">{% if p.id %}<a href="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}?bearbeiten={{ p.id }}#wartung">bearbeiten</a>{% else %}<a href="#stammdaten">in Stammdaten</a>{% endif %}</td>
+      </tr>
+      {% endif %}
+      {% else %}
+      <tr><td colspan="5" class="leer">Noch keine Wartungsaufgaben.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <form id="wartung" class="formzeile" method="post" action="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}/aufgaben">
+    <label>Aufgabe <input name="aufgabe" list="aufgaben" required placeholder="z. B. Ölwechsel"></label>
+    {% if fahrzeug.einheit %}<label>alle … {{ fahrzeug.einheit }} <input name="intervall_zaehler" inputmode="decimal" size="7"></label>{% endif %}
+    <label>{% if fahrzeug.einheit %}und/oder {% endif %}alle … Monate <input name="intervall_monate" inputmode="numeric" size="4"></label>
+    <button type="submit">Aufgabe hinzufügen</button>
+  </form>
+  <datalist id="aufgaben"><option value="Ölwechsel"><option value="Inspektion"><option value="Messerwechsel"></datalist>
+  <p class="hinweis">Erledigt ist eine Aufgabe, sobald im Fahrzeugbuch ein Eintrag mit genau diesem
+    Namen als Art steht; die nächste Fälligkeit rechnet sich ab dem letzten solchen Eintrag. Bei zwei
+    Intervallen gilt, was zuerst kommt. Der TÜV steht in den Stammdaten.</p>
+</section>
+
+<section class="karte">
   <div class="kopfzeile">
     <h2>Fahrzeugbuch</h2>
     {% if fahrzeug.aktiv %}<a class="knopf-primaer knopf-link" href="/fuhrpark/erfassen?fahrzeug={{ fahrzeug.id }}">+ Eintrag</a>{% endif %}
@@ -25,7 +81,7 @@
   {% include "fahrzeugbuch_tabelle.html" %}
 </section>
 
-<details class="karte">
+<details class="karte" id="stammdaten">
   <summary>Stammdaten bearbeiten</summary>
   <form method="post" action="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}">
     <div class="formzeile">

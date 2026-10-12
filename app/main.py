@@ -2,7 +2,7 @@ import csv
 import io
 import re
 from contextlib import asynccontextmanager, contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from urllib.parse import parse_qs, quote
 
@@ -140,6 +140,18 @@ def _monat_de(wert: str | None) -> str:
 templates.env.filters["ha"] = _ha
 templates.env.filters["monat_de"] = _monat_de
 templates.env.filters["zahl"] = fuhrpark.zahl_de
+
+
+def _anzahl_ueberfaellig() -> int:
+    """Für den Menüpunkt Fuhrpark, damit Überfälliges auf jeder Seite auffällt."""
+    conn = _get_conn()
+    try:
+        return fuhrpark.anzahl_ueberfaellig(conn, date.today())
+    finally:
+        conn.close()
+
+
+templates.env.globals["anzahl_ueberfaellig"] = _anzahl_ueberfaellig
 templates.env.filters["ortszeit"] = _ortszeit
 templates.env.filters["datum_de"] = _datum_de
 
@@ -577,9 +589,12 @@ def _fahrzeug_daten(f: dict[str, list[str]], neu: bool) -> dict:
 @app.get("/fuhrpark", response_class=HTMLResponse)
 def fuhrpark_uebersicht(request: Request) -> HTMLResponse:
     with _db() as conn:
-        fahrzeuge = fuhrpark.get_fahrzeuge(conn)
+        zeilen = fuhrpark.uebersicht(conn, date.today())
+        inaktive = [f for f in fuhrpark.get_fahrzeuge(conn) if not f["aktiv"]]
     return templates.TemplateResponse(
-        request, "fuhrpark.html", {"fahrzeuge": fahrzeuge, "einheiten": fuhrpark.EINHEITEN}
+        request,
+        "fuhrpark.html",
+        {"zeilen": zeilen, "inaktive": inaktive, "einheiten": fuhrpark.EINHEITEN},
     )
 
 
@@ -597,13 +612,20 @@ async def fahrzeug_anlegen(request: Request) -> RedirectResponse:
 def fahrzeug_detail(request: Request, fahrzeug_id: int) -> HTMLResponse:
     with _db() as conn:
         fahrzeug = fuhrpark.get_fahrzeug(conn, fahrzeug_id)
+        if fahrzeug is None:
+            return HTMLResponse("Fahrzeug nicht gefunden.", status_code=404)
         eintraege = fuhrpark.get_eintraege(conn, fahrzeug_id=str(fahrzeug_id))
-    if fahrzeug is None:
-        return HTMLResponse("Fahrzeug nicht gefunden.", status_code=404)
+        punkte = fuhrpark.wartungsplan(conn, fahrzeug, date.today())
     return templates.TemplateResponse(
         request,
         "fahrzeug.html",
-        {"fahrzeug": fahrzeug, "einheiten": fuhrpark.EINHEITEN, "eintraege": eintraege},
+        {
+            "fahrzeug": fahrzeug,
+            "einheiten": fuhrpark.EINHEITEN,
+            "eintraege": eintraege,
+            "punkte": punkte,
+            "bearbeiten": _jahr(request.query_params.get("bearbeiten", ""), 0),
+        },
     )
 
 
@@ -613,6 +635,37 @@ async def fahrzeug_speichern(request: Request, fahrzeug_id: int) -> RedirectResp
     with _db() as conn:
         _, fehler = fuhrpark.save_fahrzeug(conn, fahrzeug_id, _fahrzeug_daten(f, neu=False))
     return _zurueck(f"/fuhrpark/fahrzeuge/{fahrzeug_id}", fehler)
+
+
+@app.post("/fuhrpark/fahrzeuge/{fahrzeug_id}/aufgaben")
+async def aufgabe_anlegen(request: Request, fahrzeug_id: int) -> RedirectResponse:
+    return await _aufgabe_speichern(request, fahrzeug_id, None)
+
+
+@app.post("/fuhrpark/fahrzeuge/{fahrzeug_id}/aufgaben/{aufgabe_id}")
+async def aufgabe_aendern(request: Request, fahrzeug_id: int, aufgabe_id: int) -> RedirectResponse:
+    return await _aufgabe_speichern(request, fahrzeug_id, aufgabe_id)
+
+
+async def _aufgabe_speichern(request: Request, fahrzeug_id: int, aufgabe_id: int | None) -> RedirectResponse:
+    f = await _formular(request)
+    with _db() as conn:
+        fehler = fuhrpark.save_aufgabe(
+            conn,
+            fahrzeug_id,
+            aufgabe_id,
+            _feld(f, "aufgabe"),
+            _zaehlerstand(_feld(f, "intervall_zaehler")),
+            _zahl(_feld(f, "intervall_monate")),
+        )
+    return _zurueck(f"/fuhrpark/fahrzeuge/{fahrzeug_id}", fehler)
+
+
+@app.post("/fuhrpark/fahrzeuge/{fahrzeug_id}/aufgaben/{aufgabe_id}/loeschen")
+def aufgabe_loeschen(fahrzeug_id: int, aufgabe_id: int) -> RedirectResponse:
+    with _db() as conn:
+        fuhrpark.delete_aufgabe(conn, aufgabe_id)
+    return _zurueck(f"/fuhrpark/fahrzeuge/{fahrzeug_id}")
 
 
 # --- Fuhrpark: Fahrzeugbuch ----------------------------------------------------
