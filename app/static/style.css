@@ -724,6 +724,20 @@ li.ereignis {
   }
 }
 
+/* Fuhrpark */
+
+.knopfreihe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+small.unterzeile {
+  display: block;
+  color: var(--muted);
+  font-weight: normal;
+}
+
 /* Etiketten */
 
 .badge, .chip {

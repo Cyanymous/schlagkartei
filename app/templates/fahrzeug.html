@@ -6,6 +6,7 @@
 
 <section class="karte">
   <dl class="steckbrief">
+    <div><dt>Aktueller Stand</dt><dd>{% if fahrzeug.stand is not none %}{{ fahrzeug.stand | zahl }} {{ fahrzeug.einheit }} <small class="hinweis">am {{ fahrzeug.stand_datum | datum_de }}</small>{% elif fahrzeug.einheit %}noch nicht erfasst{% else %}kein Zähler{% endif %}</dd></div>
     <div><dt>Typ / Serie</dt><dd>{{ fahrzeug.typ or "–" }}</dd></div>
     <div><dt>Kennzeichen</dt><dd>{{ fahrzeug.kennzeichen or "–" }}</dd></div>
     <div><dt>Ölfilter</dt><dd>{{ fahrzeug.oelfilter or "–" }}</dd></div>
@@ -13,6 +14,15 @@
     <div><dt>TÜV fällig</dt><dd>{{ (fahrzeug.tuev_faellig | monat_de) or "kein TÜV" }}</dd></div>
     {% if fahrzeug.bemerkung %}<div class="breit"><dt>Bemerkung</dt><dd>{{ fahrzeug.bemerkung }}</dd></div>{% endif %}
   </dl>
+</section>
+
+<section class="karte">
+  <div class="kopfzeile">
+    <h2>Fahrzeugbuch</h2>
+    {% if fahrzeug.aktiv %}<a class="knopf-primaer knopf-link" href="/fuhrpark/erfassen?fahrzeug={{ fahrzeug.id }}">+ Eintrag</a>{% endif %}
+  </div>
+  {% set mit_fahrzeug = false %}
+  {% include "fahrzeugbuch_tabelle.html" %}
 </section>
 
 <details class="karte">

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Fahrzeugbuch – Fuhrpark{% endblock %}
+{% block content %}
+<p><a href="/fuhrpark">&larr; Fuhrpark</a></p>
+<h1>Fahrzeugbuch</h1>
+
+<form method="get" action="/fuhrpark/buch" class="filter">
+  <label>Jahr
+    <select name="jahr">
+      <option value="">alle</option>
+      {% for j in jahre %}<option {% if filter.jahr == j %}selected{% endif %}>{{ j }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Fahrzeug
+    <select name="fahrzeug">
+      <option value="">alle</option>
+      {% for f in fahrzeuge %}<option value="{{ f.id }}" {% if filter.fahrzeug_id == f.id | string %}selected{% endif %}>{{ f.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Art
+    <select name="art">
+      <option value="">alle</option>
+      {% for a in arten %}<option {% if filter.art == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit">Filtern</button>
+  <a href="/fuhrpark/buch.csv?{{ querystring }}">CSV-Export</a>
+  <a class="knopf-primaer" href="/fuhrpark/erfassen">+ Erfassen</a>
+</form>
+
+<p class="trefferzahl">{{ eintraege | length }} {{ "Eintrag" if eintraege | length == 1 else "Einträge" }}</p>
+{% set mit_fahrzeug = true %}
+{% include "fahrzeugbuch_tabelle.html" %}
+{% endblock %}

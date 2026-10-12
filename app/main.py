@@ -1,5 +1,6 @@
 import csv
 import io
+import re
 from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -50,6 +51,15 @@ def _zahl(text: str) -> float | None:
         return None
 
 
+def _zaehlerstand(text: str) -> float | None:
+    """Wie _zahl, aber ein Punkt vor genau drei Ziffern ist ein Tausenderpunkt.
+
+    In der Fuhrpark-Tabelle stehen Stände als 150.637 km; als Dezimalzahl
+    gelesen wären das 150 km.
+    """
+    return _zahl(re.sub(r"\.(?=\d{3}(\D|$))", "", text))
+
+
 def _jahr(text: str, standard: int) -> int:
     try:
         return int(text)
@@ -57,10 +67,11 @@ def _jahr(text: str, standard: int) -> int:
         return standard
 
 
-def _zurueck(url: str, fehler: str | None = None) -> RedirectResponse:
-    """Nach dem Speichern zurück zur Seite; Fehler erscheinen dort als Hinweis."""
-    if fehler:
-        url += ("&" if "?" in url else "?") + "fehler=" + quote(fehler)
+def _zurueck(url: str, fehler: str | None = None, hinweis: str | None = None) -> RedirectResponse:
+    """Nach dem Speichern zurück zur Seite; Fehler und Hinweise erscheinen dort als Meldung."""
+    for name, text in [("fehler", fehler), ("hinweis", hinweis)]:
+        if text:
+            url += ("&" if "?" in url else "?") + name + "=" + quote(text)
     return RedirectResponse(url, status_code=303)
 
 
@@ -128,6 +139,7 @@ def _monat_de(wert: str | None) -> str:
 
 templates.env.filters["ha"] = _ha
 templates.env.filters["monat_de"] = _monat_de
+templates.env.filters["zahl"] = fuhrpark.zahl_de
 templates.env.filters["ortszeit"] = _ortszeit
 templates.env.filters["datum_de"] = _datum_de
 
@@ -585,10 +597,13 @@ async def fahrzeug_anlegen(request: Request) -> RedirectResponse:
 def fahrzeug_detail(request: Request, fahrzeug_id: int) -> HTMLResponse:
     with _db() as conn:
         fahrzeug = fuhrpark.get_fahrzeug(conn, fahrzeug_id)
+        eintraege = fuhrpark.get_eintraege(conn, fahrzeug_id=str(fahrzeug_id))
     if fahrzeug is None:
         return HTMLResponse("Fahrzeug nicht gefunden.", status_code=404)
     return templates.TemplateResponse(
-        request, "fahrzeug.html", {"fahrzeug": fahrzeug, "einheiten": fuhrpark.EINHEITEN}
+        request,
+        "fahrzeug.html",
+        {"fahrzeug": fahrzeug, "einheiten": fuhrpark.EINHEITEN, "eintraege": eintraege},
     )
 
 
@@ -598,6 +613,158 @@ async def fahrzeug_speichern(request: Request, fahrzeug_id: int) -> RedirectResp
     with _db() as conn:
         _, fehler = fuhrpark.save_fahrzeug(conn, fahrzeug_id, _fahrzeug_daten(f, neu=False))
     return _zurueck(f"/fuhrpark/fahrzeuge/{fahrzeug_id}", fehler)
+
+
+# --- Fuhrpark: Fahrzeugbuch ----------------------------------------------------
+
+
+def _eintrag_daten(f: dict[str, list[str]]) -> dict:
+    return {
+        "fahrzeug_id": _jahr(_feld(f, "fahrzeug_id"), 0),
+        "datum": _feld(f, "datum"),
+        "art": _feld(f, "art"),
+        "zaehlerstand": _zaehlerstand(_feld(f, "zaehlerstand")),
+        "prozent": _jahr(_feld(f, "prozent"), 0) or None,
+        "liter": _zahl(_feld(f, "liter")),
+        "beleg": _feld(f, "beleg"),
+        "bemerkung": _feld(f, "bemerkung"),
+    }
+
+
+@app.get("/fuhrpark/erfassen", response_class=HTMLResponse)
+def fuhrpark_erfassen(request: Request) -> HTMLResponse:
+    with _db() as conn:
+        fahrzeuge = fuhrpark.get_fahrzeuge(conn, nur_aktive=True)
+        arten = fuhrpark.get_arten(conn)
+    return templates.TemplateResponse(
+        request,
+        "fuhrpark_erfassen.html",
+        {
+            "fahrzeuge": fahrzeuge,
+            "arten": arten,
+            "vorauswahl": _jahr(request.query_params.get("fahrzeug", ""), 0),
+            "prozente": fuhrpark.PROZENTE,
+            "heute": datetime.now().date().isoformat(),
+        },
+    )
+
+
+def _eintrag_formular(request: Request, conn, eintrag: dict, fehler: str | None = None) -> HTMLResponse:
+    # Inaktive Fahrzeuge nur anbieten, wenn der Eintrag schon zu einem gehört.
+    fahrzeuge = [f for f in fuhrpark.get_fahrzeuge(conn) if f["aktiv"] or f["id"] == eintrag.get("fahrzeug_id")]
+    return templates.TemplateResponse(
+        request,
+        "fahrzeug_eintrag.html",
+        {
+            "eintrag": eintrag,
+            "fahrzeuge": fahrzeuge,
+            "arten": fuhrpark.get_arten(conn),
+            "prozente": fuhrpark.PROZENTE,
+            "fehler": fehler,
+        },
+        status_code=400 if fehler else 200,
+    )
+
+
+async def _eintrag_speichern(request: Request, eintrag_id: int | None):
+    f = await _formular(request)
+    daten = _eintrag_daten(f)
+    ziel = _feld(f, "zurueck")
+    with _db() as conn:
+        gespeichert_id, fehler = fuhrpark.save_eintrag(conn, eintrag_id, daten)
+        if fehler:
+            # Formular mit den Eingaben erneut zeigen, damit auf dem Handy nichts neu getippt werden muss.
+            eingabe = daten | {
+                "id": eintrag_id,
+                "zaehlerstand": _feld(f, "zaehlerstand"),
+                "liter": _feld(f, "liter"),
+                "zurueck": ziel,
+            }
+            return _eintrag_formular(request, conn, eingabe, fehler)
+        e = fuhrpark.get_eintrag(conn, gespeichert_id)
+        hinweis = f"Gespeichert: {fuhrpark.get_fahrzeug(conn, e['fahrzeug_id'])['name']} – {e['art']}"
+        if e["liter"] is not None:
+            hinweis += f", {fuhrpark.zahl_de(e['liter'])} L" + (f" ({e['prozent']} %)" if e["prozent"] else "")
+        warnung = fuhrpark.zaehlerstand_hinweis(conn, gespeichert_id)
+    if not ziel.startswith("/"):
+        ziel = f"/fuhrpark/fahrzeuge/{e['fahrzeug_id']}"
+    return _zurueck(ziel, warnung, hinweis + ".")
+
+
+@app.post("/fuhrpark/eintraege")
+async def eintrag_anlegen(request: Request):
+    return await _eintrag_speichern(request, None)
+
+
+@app.get("/fuhrpark/eintraege/{eintrag_id}", response_class=HTMLResponse)
+def eintrag_bearbeiten(request: Request, eintrag_id: int) -> HTMLResponse:
+    with _db() as conn:
+        eintrag = fuhrpark.get_eintrag(conn, eintrag_id)
+        if eintrag is None:
+            return HTMLResponse("Eintrag nicht gefunden.", status_code=404)
+        daten = dict(eintrag)
+        daten["zaehlerstand"] = fuhrpark.zahl_de(eintrag["zaehlerstand"])
+        # Geschätzte Liter nicht ins Literfeld, sonst hätten sie beim Speichern Vorrang vor dem Prozentwert.
+        daten["liter"] = "" if eintrag["prozent"] else fuhrpark.zahl_de(eintrag["liter"])
+        return _eintrag_formular(request, conn, daten)
+
+
+@app.post("/fuhrpark/eintraege/{eintrag_id}")
+async def eintrag_aendern(request: Request, eintrag_id: int):
+    return await _eintrag_speichern(request, eintrag_id)
+
+
+@app.post("/fuhrpark/eintraege/{eintrag_id}/loeschen")
+def eintrag_loeschen(eintrag_id: int) -> RedirectResponse:
+    with _db() as conn:
+        eintrag = fuhrpark.get_eintrag(conn, eintrag_id)
+        fuhrpark.delete_eintrag(conn, eintrag_id)
+    return _zurueck(f"/fuhrpark/fahrzeuge/{eintrag['fahrzeug_id']}" if eintrag else "/fuhrpark")
+
+
+def _buch_filter(request: Request) -> dict:
+    return {
+        "fahrzeug_id": request.query_params.get("fahrzeug", ""),
+        "jahr": request.query_params.get("jahr", ""),
+        "art": request.query_params.get("art", ""),
+    }
+
+
+@app.get("/fuhrpark/buch", response_class=HTMLResponse)
+def fahrzeugbuch(request: Request) -> HTMLResponse:
+    filter_ = _buch_filter(request)
+    with _db() as conn:
+        eintraege = fuhrpark.get_eintraege(conn, **filter_)
+        fahrzeuge = fuhrpark.get_fahrzeuge(conn)
+        jahre = fuhrpark.get_eintrag_jahre(conn)
+        arten = sorted({r["art"] for r in fuhrpark.get_eintraege(conn)})
+    return templates.TemplateResponse(
+        request,
+        "fahrzeugbuch.html",
+        {
+            "eintraege": eintraege,
+            "filter": filter_,
+            "fahrzeuge": fahrzeuge,
+            "jahre": jahre,
+            "arten": arten,
+            "querystring": str(request.query_params),
+        },
+    )
+
+
+@app.get("/fuhrpark/buch.csv")
+def fahrzeugbuch_csv(request: Request) -> StreamingResponse:
+    with _db() as conn:
+        eintraege = fuhrpark.get_eintraege(conn, **_buch_filter(request))
+    zeilen = [
+        [
+            e["datum"], e["fahrzeug"], e["art"], _ha(e["zaehlerstand"]), e["einheit"] or "",
+            _ha(e["liter"]), e["prozent"] or "", e["beleg"] or "", e["bemerkung"] or "",
+        ]
+        for e in eintraege
+    ]
+    kopf = ["Datum", "Fahrzeug", "Art", "Zählerstand", "Einheit", "Liter", "geschätzt aus %", "Beleg", "Bemerkung"]
+    return _csv_antwort("fahrzeugbuch.csv", kopf, zeilen)
 
 
 # --- CSV-Export Pflanzenschutz -------------------------------------------------

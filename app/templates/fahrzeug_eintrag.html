@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Eintrag – Fuhrpark{% endblock %}
+{% block content %}
+{% set neu = not eintrag.id %}
+<p><a href="/fuhrpark/buch">&larr; Fahrzeugbuch</a></p>
+<h1>{{ "Neuer Eintrag" if neu else "Eintrag bearbeiten" }}</h1>
+
+<form class="karte" method="post" action="{{ '/fuhrpark/eintraege' if neu else '/fuhrpark/eintraege/' ~ eintrag.id }}">
+  <input type="hidden" name="zurueck" value="{{ eintrag.zurueck or '' }}">
+  <div class="formzeile">
+    <label>Fahrzeug
+      <select name="fahrzeug_id" required>
+        <option value="">– bitte wählen –</option>
+        {% for f in fahrzeuge %}
+        <option value="{{ f.id }}" {% if f.id == eintrag.fahrzeug_id %}selected{% endif %}>{{ f.name }}{% if f.einheit %} ({{ f.einheit }}){% endif %}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Datum <input type="date" name="datum" required value="{{ eintrag.datum or '' }}"></label>
+    <label>Art <input name="art" list="arten" required value="{{ eintrag.art or '' }}"></label>
+    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10" value="{{ eintrag.zaehlerstand or '' }}"></label>
+  </div>
+  <div class="formzeile">
+    <label>Getankt
+      <select name="prozent">
+        <option value="">–</option>
+        {% for p in prozente %}<option value="{{ p }}" {% if p == eintrag.prozent %}selected{% endif %}>{{ p }} % vom Tank</option>{% endfor %}
+      </select>
+    </label>
+    <label>oder genaue Liter <input name="liter" inputmode="decimal" size="7" value="{{ eintrag.liter or '' }}"></label>
+    <label>Beleg-Nr. <input name="beleg" size="12" value="{{ eintrag.beleg or '' }}"></label>
+    <label class="breit">Bemerkung <input name="bemerkung" value="{{ eintrag.bemerkung or '' }}"></label>
+  </div>
+  <datalist id="arten">{% for a in arten %}<option value="{{ a }}">{% endfor %}</datalist>
+  <p class="hinweis">Genaue Liter haben Vorrang vor dem Prozentwert. Ein Prozentwert wird beim Speichern
+    mit der aktuellen Tankgröße des Fahrzeugs neu umgerechnet.</p>
+  <div class="formzeile">
+    <button type="submit">Speichern</button>
+    <a href="{{ '/fuhrpark/fahrzeuge/' ~ eintrag.fahrzeug_id if eintrag.fahrzeug_id else '/fuhrpark' }}">Abbrechen</a>
+  </div>
+</form>
+
+{% if not neu %}
+<form method="post" action="/fuhrpark/eintraege/{{ eintrag.id }}/loeschen">
+  <button type="submit" class="knopf-gefahr">Eintrag löschen</button>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{# Eingebunden in Fahrzeugbuch und Fahrzeugseite; mit_fahrzeug blendet die Fahrzeugspalte ein. #}
+<div class="tabelle">
+<table class="klickbar">
+  <thead>
+    <tr>
+      <th>Datum</th>{% if mit_fahrzeug %}<th>Fahrzeug</th>{% endif %}<th>Art</th>
+      <th class="zahl">Zählerstand</th><th class="zahl">Liter</th><th>Beleg</th><th>Bemerkung</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in eintraege %}
+    <tr>
+      <td class="nowrap"><a class="zeilenlink" href="/fuhrpark/eintraege/{{ e.id }}">{{ e.datum | datum_de }}</a></td>
+      {% if mit_fahrzeug %}<td>{{ e.fahrzeug }}</td>{% endif %}
+      <td><span class="chip chip-arbeit">{{ e.art }}</span></td>
+      <td class="zahl">{% if e.zaehlerstand is not none %}{{ e.zaehlerstand | zahl }} {{ e.einheit or "" }}{% endif %}</td>
+      <td class="zahl">{% if e.liter is not none %}<span {% if e.prozent %}title="geschätzt: {{ e.prozent }} % vom Tank"{% endif %}>{% if e.prozent %}≈ {% endif %}{{ e.liter | zahl }}</span>{% endif %}</td>
+      <td class="nowrap">{{ e.beleg or "" }}</td>
+      <td>{{ e.bemerkung or "" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="leer">Keine Einträge.</td></tr>
+    {% endfor %}
+  </tbody>
+  {% set liter = eintraege | map(attribute="liter") | select("number") | list %}
+  {% if liter %}
+  <tfoot>
+    <tr><td colspan="{{ 4 if mit_fahrzeug else 3 }}">Summe Liter (≈ = geschätzt)</td><td class="zahl">{{ liter | sum | zahl }}</td><td colspan="2"></td></tr>
+  </tfoot>
+  {% endif %}
+</table>
+</div>

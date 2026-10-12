@@ -41,3 +41,70 @@ def test_fahrzeug_fehler_wird_angezeigt(client):
     _fahrzeug_anlegen(client)
     r = _fahrzeug_anlegen(client)
     assert "gibt es schon" in r.text
+
+
+def test_tanken_mit_prozent(client):
+    _fahrzeug_anlegen(client)
+    r = client.post(
+        "/fuhrpark/eintraege",
+        data={"fahrzeug_id": "1", "datum": "2026-04-04", "art": "Tanken", "zaehlerstand": "3.058",
+              "prozent": "90", "liter": "", "zurueck": "/fuhrpark/erfassen"},
+    )
+    assert r.status_code == 200
+    assert "Gespeichert: JD 5720 – Tanken, 108 L (90 %)." in r.text
+
+    seite = client.get("/fuhrpark/fahrzeuge/1").text
+    assert "3.058 h" in seite
+    assert "≈ 108" in seite
+
+    csv = client.get("/fuhrpark/buch.csv").text
+    assert "2026-04-04;JD 5720;Tanken;3058;h;108;90;;" in csv
+
+
+def test_tanken_an_der_tankstelle_mit_genauen_litern(client):
+    _fahrzeug_anlegen(client, "VW LT28", "km", "80")
+    client.post(
+        "/fuhrpark/eintraege",
+        data={"fahrzeug_id": "1", "datum": "2026-02-03", "art": "Tanken", "zaehlerstand": "123.456",
+              "prozent": "90", "liter": "69,57", "beleg": "4711/0815"},
+    )
+    buch = client.get("/fuhrpark/buch?fahrzeug=1").text
+    assert "123.456 km" in buch
+    assert "69,6" in buch and "≈" not in buch.split("<tbody>")[1].split("</tbody>")[0]
+    assert "4711/0815" in buch
+
+
+def test_fehlerhafter_eintrag_zeigt_formular_mit_eingaben(client):
+    client.post("/fuhrpark/fahrzeuge", data={"name": "Gator", "einheit": "h"})  # ohne Tankgröße
+    r = client.post(
+        "/fuhrpark/eintraege",
+        data={"fahrzeug_id": "1", "datum": "2026-04-01", "art": "Tanken", "zaehlerstand": "456", "prozent": "90"},
+    )
+    assert r.status_code == 400
+    assert "keine Tankgröße" in r.text
+    assert 'value="456"' in r.text
+
+
+def test_eintrag_bearbeiten_und_loeschen(client):
+    _fahrzeug_anlegen(client)
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-04-04", "art": "Tanken", "prozent": "50"})
+    formular = client.get("/fuhrpark/eintraege/1").text
+    assert '<option value="50" selected>' in formular
+
+    r = client.post(
+        "/fuhrpark/eintraege/1",
+        data={"fahrzeug_id": "1", "datum": "2026-04-05", "art": "Tanken", "prozent": "", "liter": "40"},
+    )
+    assert "Gespeichert: JD 5720 – Tanken, 40 L." in r.text
+    assert "05.04.2026" in r.text
+
+    r = client.post("/fuhrpark/eintraege/1/loeschen")
+    assert "Keine Einträge." in r.text
+
+
+def test_warnung_bei_kleinerem_zaehlerstand(client):
+    _fahrzeug_anlegen(client)
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-05-12", "art": "Ölwechsel", "zaehlerstand": "464"})
+    r = client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-06-01", "art": "Zählerstand", "zaehlerstand": "441"})
+    assert "kleiner als am 12.05.2026" in r.text
+    assert "441 h" in r.text  # trotzdem gespeichert
