@@ -15,6 +15,10 @@ Stufe 2 (Schlagkartei, SPEC.md Abschnitt 12) und der **Fuhrpark** (SPEC.md
 Abschnitt 13, eigener Teil derselben App) sind gebaut, die Prüfung durch den
 Betreiber steht aus. Nichts aus Stufe 3 umsetzen, auch nicht vorbereitend.
 
+**Nächster Schritt:** die Erfassen-Seite des Fuhrparks mit HTMX + Alpine.js
+umbauen (SPEC.md Abschnitt 13, „Nächster Schritt“). Erst einen Plan vorlegen
+und die Freigabe abwarten.
+
 ## Oberstes Ziel: Einfachheit
 
 Der Betreiber pflegt den Code allein und ist kein Berufsentwickler. Bevorzuge

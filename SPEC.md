@@ -509,3 +509,31 @@ gibt kein Übernahmeskript.
   Stammdaten)
 - Keine Verbrauchsauswertung, keine Kosten, keine Erinnerungen per Mail
 - Keine Verknüpfung von Feldarbeiten mit Maschinen
+- Weitere Funktionen aus der Recherche vom 12.10.2026 (Mängel-/To-do-Liste,
+  Kosten, Fälligkeitsprognose, Dieselübersicht, Fotos/Belege, Teilelager)
+  hat der Betreiber vorerst abgelehnt.
+
+### Entschieden, vorerst nicht ändern (12.10.2026)
+
+- Die Auswahl der Art beim Erfassen bleibt eine `datalist` (Vorschlagsliste
+  des Browsers), keine Knöpfe.
+- Das Datumsfeld bleibt das eingebaute des Browsers (Betreiber nutzt
+  Chrome); keine Kalender-Bibliothek, keine Knöpfe „Heute/Gestern“.
+
+### Nächster Schritt: Erfassen-Seite mit HTMX + Alpine.js
+
+Noch nicht begonnen; zuerst einen Plan vorlegen und Freigabe abwarten.
+Ideen aus dem Gespräch vom 12.10.2026:
+
+- ein Formular statt zwei; die Tankfelder erscheinen nur bei Art „Tanken“
+- Liter sofort anzeigen („90 % = 108 L“)
+- nach Wahl des Fahrzeugs dessen letzten Stand und Wartungsaufgaben als
+  Vorschläge für die Art zeigen
+- Warnung vor dem Speichern, wenn der Stand kleiner ist als der letzte
+- speichern ohne Neuladen der Seite
+- später ebenso: Filter im Fahrzeugbuch ohne Knopf „Filtern“,
+  Wartungsaufgaben direkt in der Zeile bearbeiten
+
+HTMX und Alpine.js liegen noch nicht in `app/static/`; beim ersten Einsatz
+die aktuelle Version einmalig herunterladen und mit Versionsnummer im
+Dateinamen ablegen.
