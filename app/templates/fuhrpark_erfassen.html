@@ -50,7 +50,7 @@
     <label>Datum <input type="date" name="datum" required value="{{ heute }}"></label>
     <label>Art <input name="art" list="arten" required placeholder="z. B. Ölwechsel"></label>
     <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10"></label>
-    <label class="breit">Bemerkung <input name="bemerkung"></label>
+    <label class="breit">Bemerkung <textarea name="bemerkung" rows="3" placeholder="z. B. was getauscht wurde, Zustand vor dem TÜV"></textarea></label>
     <button type="submit">Speichern</button>
   </div>
   <datalist id="arten">{% for a in arten %}<option value="{{ a }}">{% endfor %}</datalist>

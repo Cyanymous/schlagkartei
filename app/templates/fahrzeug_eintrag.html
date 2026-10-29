@@ -29,7 +29,7 @@
     </label>
     <label>oder genaue Liter <input name="liter" inputmode="decimal" size="7" value="{{ eintrag.liter or '' }}"></label>
     <label>Beleg-Nr. <input name="beleg" size="12" value="{{ eintrag.beleg or '' }}"></label>
-    <label class="breit">Bemerkung <input name="bemerkung" value="{{ eintrag.bemerkung or '' }}"></label>
+    <label class="breit">Bemerkung <textarea name="bemerkung" rows="3">{{ eintrag.bemerkung or '' }}</textarea></label>
   </div>
   <datalist id="arten">{% for a in arten %}<option value="{{ a }}">{% endfor %}</datalist>
   <p class="hinweis">Genaue Liter haben Vorrang vor dem Prozentwert. Ein Prozentwert wird beim Speichern

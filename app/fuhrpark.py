@@ -165,7 +165,9 @@ def save_eintrag(conn: sqlite3.Connection, eintrag_id: int | None, daten: dict) 
 
     werte = (
         fahrzeug["id"], daten["datum"], art, stand, liter, prozent,
-        (daten.get("beleg") or "").strip() or None, (daten.get("bemerkung") or "").strip() or None,
+        (daten.get("beleg") or "").strip() or None,
+        # Mehrzeilige Bemerkungen (z. B. Zustand vor dem TÜV) kommen aus dem Browser mit \r\n.
+        (daten.get("bemerkung") or "").replace("\r\n", "\n").strip() or None,
     )
     if eintrag_id is None:
         eintrag_id = conn.execute(

@@ -11,7 +11,9 @@
     <span class="ereignis-text">
       {% if mit_fahrzeug %}<strong>{{ e.fahrzeug }}</strong>{% endif %}
       {% if e.zaehlerstand is not none %}{% if mit_fahrzeug %} · {% endif %}{{ e.zaehlerstand | zahl }} {{ e.einheit }}{% endif %}
-      <small>{{ [liter, ("Beleg " ~ e.beleg) if e.beleg else "", e.bemerkung or ""] | select | join(" · ") }}</small>
+      {% set angaben = [liter, ("Beleg " ~ e.beleg) if e.beleg else ""] | select | join(" · ") %}
+      {% if angaben %}<small>{{ angaben }}</small>{% endif %}
+      {% if e.bemerkung %}<small class="bemerkung">{{ e.bemerkung }}</small>{% endif %}
     </span>
     <a class="ereignis-link zeilenlink" href="/fuhrpark/eintraege/{{ e.id }}">bearbeiten</a>
   </li>

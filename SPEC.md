@@ -447,7 +447,10 @@ gibt kein Übernahmeskript.
 - **Fahrzeugbuch:** ein Verlauf je Fahrzeug. Jeder Eintrag hat Datum, Art
   (freier Text mit Vorschlägen, z. B. Tanken, Zählerstand, Ölwechsel,
   Inspektion, Reparatur, TÜV), optional Zählerstand, Liter, Belegnummer und
-  Bemerkung.
+  Bemerkung. Die Bemerkung ist mehrzeilig, damit auch längere Notizen
+  hineinpassen (was getauscht wurde, Zustand vor dem TÜV); das Fahrzeugbuch
+  zeigt sie vollständig mit Zeilenumbrüchen. Reparaturen und Zustandsnotizen
+  sind gewöhnliche Einträge, keine eigene Tabelle (29.10.2026).
 - **Tanken ohne Messuhr:** Der Hoftank hat keine Messuhr. Jedes Fahrzeug hat
   deshalb in den Stammdaten eine Tankgröße in Litern. Beim Tanken wählt der
   Betreiber, zu wie viel Prozent der Tankgröße er getankt hat (10 % bis

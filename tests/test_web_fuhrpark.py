@@ -166,3 +166,16 @@ def test_fahrzeugseite_zeigt_nur_die_letzten_eintraege(client):
     seite = client.get("/fuhrpark/fahrzeuge/1").text
     assert "12.03.2026" in seite and "02.03.2026" not in seite
     assert "alle 12 Einträge im Fahrzeugbuch" in seite
+
+
+def test_mehrzeilige_bemerkung(client):
+    _fahrzeug_anlegen(client)
+    client.post(
+        "/fuhrpark/eintraege",
+        data={"fahrzeug_id": "1", "datum": "2026-10-29", "art": "Reparatur",
+              "bemerkung": "Lichtmaschine getauscht\r\nBremsen vorn 60 %"},
+    )
+    buch = client.get("/fuhrpark/buch").text
+    assert '<small class="bemerkung">Lichtmaschine getauscht\nBremsen vorn 60 %</small>' in buch
+    formular = client.get("/fuhrpark/eintraege/1").text
+    assert '<textarea name="bemerkung" rows="3">Lichtmaschine getauscht\nBremsen vorn 60 %</textarea>' in formular
