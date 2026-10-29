@@ -62,6 +62,16 @@ def save_fahrzeug(conn: sqlite3.Connection, fahrzeug_id: int | None, daten: dict
     ).fetchone()
     if vorhanden:
         return None, f"Das Fahrzeug „{werte['name']}“ gibt es schon."
+    # Ohne Zähler könnte die App solche Aufgaben nie mehr fällig rechnen.
+    mit_zaehler = [r[0] for r in conn.execute(
+        "SELECT aufgabe FROM wartungsaufgaben WHERE fahrzeug_id = ? AND intervall_zaehler IS NOT NULL ORDER BY aufgabe",
+        (fahrzeug_id,),
+    )]
+    if not werte.get("einheit") and mit_zaehler:
+        return None, (
+            f"Ohne Zähler geht das nicht: {', '.join(mit_zaehler)} hat ein Intervall nach Zählerstand. "
+            "Bitte im Wartungsplan zuerst auf Monate umstellen."
+        )
 
     spalten = [
         "name", "modell", "seriennummer", "baujahr", "kennzeichen", "oelfilter",

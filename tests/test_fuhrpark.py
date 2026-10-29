@@ -239,3 +239,16 @@ def test_aufgabe_ungueltig(conn, aufgabe, zaehler, monate, meldung):
 def test_aufgabe_mit_zaehlerintervall_braucht_zaehler(conn):
     fahrzeug_id, _ = fp.save_fahrzeug(conn, None, {"name": "Kompressor"})
     assert "keinen Zähler" in fp.save_aufgabe(conn, fahrzeug_id, None, "Wartung", 1000.0, None)
+
+
+def test_zaehler_entfernen_nur_ohne_zaehler_intervalle(conn):
+    fahrzeug_id = _fahrzeug(conn, name="Kompressor")
+    assert fp.save_aufgabe(conn, fahrzeug_id, None, "Wartung", 1000.0, None) is None
+    _, fehler = fp.save_fahrzeug(conn, fahrzeug_id, {"name": "Kompressor", "einheit": ""})
+    assert fehler == (
+        "Ohne Zähler geht das nicht: Wartung hat ein Intervall nach Zählerstand. "
+        "Bitte im Wartungsplan zuerst auf Monate umstellen."
+    )
+    aufgabe_id = fp.get_aufgaben(conn, fahrzeug_id)[0]["id"]
+    assert fp.save_aufgabe(conn, fahrzeug_id, aufgabe_id, "Wartung", None, 24) is None
+    assert fp.save_fahrzeug(conn, fahrzeug_id, {"name": "Kompressor", "einheit": ""}) == (fahrzeug_id, None)

@@ -458,7 +458,10 @@ Tankgrößen) pflegt er in der App nach.
   Spargelschälautomat) und Tanks (Dieseltank, Benzintank) stehen in einer
   gemeinsamen Liste. Keine Zuordnung zu einem Betrieb, der Fuhrpark ist
   gemeinsam. Fahrzeuge werden nicht gelöscht, sondern auf inaktiv gesetzt.
-- **Zählereinheit je Fahrzeug:** h, km, Stück oder keine.
+- **Zählereinheit je Fahrzeug:** h, km, Stück oder keine. Den Zähler
+  entfernen geht nur, solange keine Wartungsaufgabe des Fahrzeugs ein
+  Intervall nach Zählerstand hat; sonst nennt die App die Aufgaben, die
+  zuerst auf Monate umzustellen sind (29.10.2026, Anlass: Kompressor).
 - **Aktueller Stand** ist immer der Zählerstand des neuesten Eintrags im
   Fahrzeugbuch, der einen Zählerstand hat (nach Datum). Er wird nie von Hand
   gepflegt; in der Tabelle war genau dieser Wert regelmäßig veraltet.
@@ -556,11 +559,27 @@ Tankgrößen) pflegt er in der App nach.
 - Das Datumsfeld bleibt das eingebaute des Browsers (Betreiber nutzt
   Chrome); keine Kalender-Bibliothek, keine Knöpfe „Heute/Gestern“.
 
+### Stand 29.10.2026
+
+Gebaut und vom Betreiber angesehen („sieht ehrlich gut aus“): Erfassen mit
+HTMX 2.0.11 und Alpine.js 3.17.4 (Oberfläche, Punkt 2), „erledigen“ an den
+Fälligkeiten, mehrzeilige Bemerkung, neues Aussehen (Abschnitt 4,
+„Aussehen“), Version und letzte Datenänderung in der Seitenleiste
+(Abschnitt 9), TÜV-Ampel mit drei Monaten Kulanz. Der Bestand ist aus der
+Tabelle übernommen; offen beim Betreiber:
+
+- Tankgrößen aller Fahrzeuge nachtragen
+- fällige Wartungen erledigen und eintragen (Baroness, JD 6630, Kompressor)
+- JD 6620: Ölwechsel nach Zeit, bis der Stundenzähler repariert ist; danach
+  einen Eintrag „Zählerstand“ mit dem neuen Stand
+- alle Daten lokal einpflegen, dann `data/` auf den Homeserver umziehen
+  (Abschnitt 9)
+
 ### Nächster Schritt
 
-Die Erfassen-Seite ist seit 29.10.2026 mit HTMX 2.0.11 und Alpine.js 3.17.4
-umgebaut (siehe Oberfläche, Punkt 2); die Prüfung durch den Betreiber steht
-aus. Danach, jeweils nach Plan und Freigabe:
+Jeweils nach Plan und Freigabe:
 
 - Filter im Fahrzeugbuch ohne Knopf „Filtern“
 - Wartungsaufgaben direkt in der Zeile bearbeiten
+- das kleine Skript in `feldarbeit.html` (Schnellauswahl) nach `app.js`
+  verschieben, wie Abschnitt 4 es verlangt

@@ -15,10 +15,12 @@ Stufe 2 (Schlagkartei, SPEC.md Abschnitt 12) und der **Fuhrpark** (SPEC.md
 Abschnitt 13, eigener Teil derselben App) sind gebaut, die Prüfung durch den
 Betreiber steht aus. Nichts aus Stufe 3 umsetzen, auch nicht vorbereitend.
 
-Die Erfassen-Seite des Fuhrparks ist mit HTMX + Alpine.js umgebaut
-(29.10.2026), die Prüfung durch den Betreiber steht aus. **Nächster
-Schritt:** SPEC.md Abschnitt 13, „Nächster Schritt“; jeweils erst einen Plan
-vorlegen und die Freigabe abwarten.
+Am 29.10.2026 dazugekommen: Erfassen mit HTMX + Alpine.js, neues Aussehen
+für den PC (Seitenleiste, kompakt), Version und Datenstand in der
+Seitenleiste; der Fuhrpark-Bestand ist aus der Tabelle übernommen. Was beim
+Betreiber offen ist und was als Nächstes kommt: SPEC.md Abschnitt 13,
+„Stand 29.10.2026“ und „Nächster Schritt“; jeweils erst einen Plan vorlegen
+und die Freigabe abwarten.
 
 ## Oberstes Ziel: Einfachheit
 
@@ -49,6 +51,8 @@ Sobald vorhanden, hier aktuell halten:
     `compose.yaml` deshalb mit `:z`/`:ro,z`; ohne das Flag schlägt der
     Start mit `unable to open database file` fehl.
 - Tests: `.venv/bin/pytest` (oder `pytest` bei aktivierter venv)
+- Datenbank-Änderungen von Hand (Dateien in `data/` gehören root): im
+  Container, z. B. `docker compose exec -T web python - < skript.py`
 
 ## Feste Regeln
 
