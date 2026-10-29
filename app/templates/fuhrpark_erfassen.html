@@ -4,58 +4,51 @@
 <p><a href="/fuhrpark">&larr; Fuhrpark</a></p>
 <h1>Erfassen</h1>
 
-{% set zurueck = "/fuhrpark/fahrzeuge/" ~ vorauswahl if vorauswahl else "/fuhrpark/erfassen" %}
-{% macro fahrzeugauswahl(mit_tank) %}
-<label>Fahrzeug
-  <select name="fahrzeug_id" required>
-    <option value="">– bitte wählen –</option>
-    {% for f in fahrzeuge %}
-    <option value="{{ f.id }}" {% if f.id == vorauswahl %}selected{% endif %}>
-      {{ f.name }}{% if f.stand is not none %} · zuletzt {{ f.stand | zahl }} {{ f.einheit }}{% endif %}{% if mit_tank and f.tank_liter %} · Tank {{ f.tank_liter | zahl }} L{% endif %}
-    </option>
-    {% endfor %}
-  </select>
-</label>
-{% endmacro %}
-
-<form class="karte" method="post" action="/fuhrpark/eintraege">
-  <h2>Tanken</h2>
-  <input type="hidden" name="art" value="Tanken">
-  <input type="hidden" name="zurueck" value="{{ zurueck }}">
+{# Ein Formular für alle Einträge. Ohne JavaScript sind alle Felder sichtbar;
+   mit JavaScript erscheinen die Tankfelder nur bei der Art „Tanken“. #}
+<form class="karte" method="post" action="/fuhrpark/eintraege" x-data="erfassen">
+  <input type="hidden" name="zurueck" value="{{ '/fuhrpark/fahrzeuge/' ~ vorauswahl if vorauswahl else '/fuhrpark/erfassen' }}">
   <div class="formzeile">
-    {{ fahrzeugauswahl(true) }}
+    <label>Fahrzeug
+      <select name="fahrzeug_id" id="fahrzeug" required x-ref="fahrzeug" @change="waehlen()">
+        <option value="">– bitte wählen –</option>
+        {% for f in fahrzeuge %}
+        <option value="{{ f.id }}" {% if f.id == vorauswahl %}selected{% endif %}
+                data-tank="{{ f.tank_liter or '' }}" data-stand="{{ f.stand if f.stand is not none else '' }}" data-einheit="{{ f.einheit or '' }}">
+          {{ f.name }}{% if f.stand is not none %} · zuletzt {{ f.stand | zahl }} {{ f.einheit }}{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
     <label>Datum <input type="date" name="datum" required value="{{ heute }}"></label>
-    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10"></label>
+    <label>Art <input name="art" list="arten" required placeholder="z. B. Tanken, Reparatur" x-model="art"></label>
+    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10" x-model="stand"></label>
   </div>
-  <div class="formzeile">
+  <template x-if="standWarnung"><p class="hinweis-warnung" x-text="standWarnung"></p></template>
+
+  <div class="formzeile" x-show="tanken">
     <label>Getankt
-      <select name="prozent">
+      <select name="prozent" x-model="prozent">
         {% for p in prozente %}<option value="{{ p }}" {% if p == 90 %}selected{% endif %}>{{ p }} % vom Tank</option>{% endfor %}
       </select>
     </label>
-    <label>oder genaue Liter <input name="liter" inputmode="decimal" size="7" placeholder="vom Beleg"></label>
-    <label>Beleg-Nr. <input name="beleg" size="12"></label>
-    <label class="breit">Bemerkung <input name="bemerkung" placeholder="z. B. Hoftank, Tankstelle"></label>
-    <button type="submit">Tanken speichern</button>
+    <label>oder genaue Liter <input name="liter" inputmode="decimal" size="7" placeholder="vom Beleg" x-model="liter"></label>
+    <template x-if="literText"><span class="liter-vorschau" x-text="literText"></span></template>
   </div>
-  <p class="hinweis">Ohne Literangabe rechnet die App die Menge aus Prozent und Tankgröße.
-    Genaue Liter vom Beleg haben Vorrang.</p>
-</form>
 
-<form class="karte" method="post" action="/fuhrpark/eintraege">
-  <h2>Sonstiger Eintrag</h2>
-  <input type="hidden" name="zurueck" value="{{ zurueck }}">
   <div class="formzeile">
-    {{ fahrzeugauswahl(false) }}
-    <label>Datum <input type="date" name="datum" required value="{{ heute }}"></label>
-    <label>Art <input name="art" list="arten" required placeholder="z. B. Ölwechsel"></label>
-    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10"></label>
-    <label class="breit">Bemerkung <textarea name="bemerkung" rows="3" placeholder="z. B. was getauscht wurde, Zustand vor dem TÜV"></textarea></label>
-    <button type="submit">Speichern</button>
+    <label>Beleg-Nr. <input name="beleg" size="12" x-model="beleg"></label>
+    <label class="breit">Bemerkung
+      <textarea name="bemerkung" rows="3" placeholder="z. B. was getauscht wurde, Zustand vor dem TÜV" x-model="bemerkung"></textarea>
+    </label>
   </div>
   <datalist id="arten">{% for a in arten %}<option value="{{ a }}">{% endfor %}</datalist>
-  <p class="hinweis">Für einen erledigten Wartungspunkt die Art genau so nennen wie die Aufgabe im
-    Wartungsplan (z. B. „Ölwechsel“) und den Zählerstand eintragen.</p>
+  <div class="formzeile">
+    <button type="submit">Speichern</button>
+  </div>
+  <p class="hinweis">Beim Tanken ohne Literangabe rechnet die App die Menge aus Prozent und Tankgröße;
+    genaue Liter vom Beleg haben Vorrang. Für einen erledigten Wartungspunkt die Art genau so nennen
+    wie die Aufgabe im Wartungsplan (z. B. „Ölwechsel“) und den Zählerstand eintragen.</p>
 </form>
 
 {% if not fahrzeuge %}

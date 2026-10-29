@@ -179,3 +179,22 @@ def test_mehrzeilige_bemerkung(client):
     assert '<small class="bemerkung">Lichtmaschine getauscht\nBremsen vorn 60 %</small>' in buch
     formular = client.get("/fuhrpark/eintraege/1").text
     assert '<textarea name="bemerkung" rows="3">Lichtmaschine getauscht\nBremsen vorn 60 %</textarea>' in formular
+
+
+def test_erfassen_ist_ein_formular_mit_tankangaben(client):
+    _fahrzeug_anlegen(client)
+    seite = client.get("/fuhrpark/erfassen").text
+    assert seite.count("<form") == 1
+    assert 'data-tank="120.0"' in seite
+    assert '<script src="/static/alpine-3.17.4.min.js" defer></script>' in seite
+
+
+def test_prozent_zaehlt_nur_beim_tanken(client):
+    # Das Erfassen-Formular schickt den Prozentwert auch bei anderen Arten mit.
+    _fahrzeug_anlegen(client)
+    r = client.post(
+        "/fuhrpark/eintraege",
+        data={"fahrzeug_id": "1", "datum": "2026-10-29", "art": "Reparatur", "prozent": "90", "liter": ""},
+    )
+    assert "Gespeichert: JD 5720 – Reparatur." in r.text
+    assert "108" not in client.get("/fuhrpark/buch").text

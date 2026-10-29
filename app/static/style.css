@@ -732,6 +732,22 @@ li.ereignis {
   color: var(--muted);
 }
 
+.hinweis-warnung {
+  color: var(--chip-mittel-text);
+  background: var(--chip-mittel-bg);
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+.liter-vorschau {
+  align-self: center;
+  padding-top: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
 .ereignis-text small.bemerkung {
   white-space: pre-line;
 }

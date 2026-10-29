@@ -159,7 +159,10 @@ def save_eintrag(conn: sqlite3.Connection, eintrag_id: int | None, daten: dict) 
         return None, f"„{fahrzeug['name']}“ hat keinen Zähler. Zählereinheit in den Stammdaten eintragen."
     if stand is not None and stand < 0:
         return None, "Der Zählerstand darf nicht negativ sein."
-    liter, prozent, fehler = tankmenge(fahrzeug["tank_liter"], daten.get("prozent"), daten.get("liter"))
+    # Das Erfassen-Formular schickt den Prozentwert immer mit, auch wenn die
+    # Tankfelder ausgeblendet sind; er zählt nur beim Tanken.
+    prozent = daten.get("prozent") if art.lower() == "tanken" else None
+    liter, prozent, fehler = tankmenge(fahrzeug["tank_liter"], prozent, daten.get("liter"))
     if fehler:
         return None, fehler
 
