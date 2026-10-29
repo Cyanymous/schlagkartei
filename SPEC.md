@@ -306,6 +306,11 @@ CSV-Export enthält die gefilterten Zeilen.
   zur Zuordnung von `betrieb.guid` zu einem Anzeigenamen (siehe Abschnitt 11,
   Frage 5); keine Zugangsdaten nötig
 - Update auf dem Server: `git pull && docker compose up -d --build`
+- Gebaut wird aus einem Git-Klon: Der Docker-Build liest den aktuellen
+  Commit aus `.git` und zeigt ihn mit dem Baudatum unten in der
+  Seitenleiste („Version …“), daneben die letzte Änderung der Datenbank
+  (Änderungszeit der Datei). Ohne `.git`, etwa aus einem ZIP-Download,
+  schlägt der Build fehl.
 - Backup: `exports/` ist der rechtlich relevante Bestand und gehört in die
   Serversicherung. Seit es Notizen gibt, gehört auch `data/` in die
   Sicherung, weil dort eigene, nicht rekonstruierbare Daten liegen. Ab
