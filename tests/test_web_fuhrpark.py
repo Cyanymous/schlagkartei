@@ -185,7 +185,7 @@ def test_erfassen_ist_ein_formular_mit_tankangaben(client):
     _fahrzeug_anlegen(client)
     seite = client.get("/fuhrpark/erfassen").text
     assert seite.count("<form") == 1
-    assert 'data-tank="120.0"' in seite
+    assert 'hx-post="/fuhrpark/eintraege"' in seite and 'action="/fuhrpark/eintraege"' in seite
     assert '<script src="/static/alpine-3.17.4.min.js" defer></script>' in seite
 
 
@@ -198,3 +198,34 @@ def test_prozent_zaehlt_nur_beim_tanken(client):
     )
     assert "Gespeichert: JD 5720 – Reparatur." in r.text
     assert "108" not in client.get("/fuhrpark/buch").text
+
+
+def test_erfassen_fahrzeugblock(client):
+    _fahrzeug_anlegen(client)
+    client.post("/fuhrpark/fahrzeuge/1/aufgaben", data={"aufgabe": "Ölwechsel", "intervall_zaehler": "500"})
+    client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": "2026-01-18", "art": "Ölwechsel", "zaehlerstand": "3.054"})
+    block = client.get("/fuhrpark/erfassen/fahrzeug?fahrzeug_id=1").text
+    assert "Zuletzt <strong>3.054 h</strong> am 18.01.2026 · Tank 120 L" in block
+    assert 'data-tank="120.0" data-stand="3054.0" data-einheit="h"' in block
+    assert 'data-art="Ölwechsel"' in block and "in Ordnung" in block
+    assert 'x-init="fahrzeug = {}"' in client.get("/fuhrpark/erfassen/fahrzeug?fahrzeug_id=").text
+
+
+def test_speichern_per_htmx_ohne_weiterleitung(client):
+    _fahrzeug_anlegen(client)
+    daten = {"fahrzeug_id": "1", "datum": "2026-04-04", "art": "Tanken", "prozent": "90", "zurueck": "/fuhrpark/erfassen"}
+    r = client.post("/fuhrpark/eintraege", data=daten, headers={"HX-Request": "true"}, follow_redirects=False)
+    assert r.status_code == 200
+    assert r.headers["HX-Trigger"] == "eintrag-gespeichert"
+    assert "Gespeichert: JD 5720 – Tanken, 108 L (90 %)." in r.text
+    assert "Letzte Einträge" in r.text and "≈ 108 L" in r.text
+    assert "<html" not in r.text
+
+    r = client.post("/fuhrpark/eintraege", data=daten | {"fahrzeug_id": ""}, headers={"HX-Request": "true"})
+    assert r.status_code == 200
+    assert "HX-Trigger" not in r.headers
+    assert '<div class="meldung-fehler">Bitte ein Fahrzeug auswählen.</div>' in r.text
+
+    # Ohne JavaScript bleibt es bei der Weiterleitung.
+    r = client.post("/fuhrpark/eintraege", data=daten, follow_redirects=False)
+    assert r.status_code == 303

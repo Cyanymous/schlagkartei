@@ -1,0 +1,12 @@
+{# Antwort auf Speichern per HTMX auf der Erfassen-Seite (ohne JavaScript leitet der Server weiter). #}
+{% if fehler %}<div class="meldung-fehler">{{ fehler }}</div>{% endif %}
+{% if warnung %}<div class="meldung-fehler">{{ warnung }}</div>{% endif %}
+{% if hinweis %}
+<div class="meldung-ok">{{ hinweis }}</div>
+<div class="karte">
+  <h2 class="abschnitt-klein">Letzte Einträge</h2>
+  {% set mit_fahrzeug = false %}
+  {% include "fahrzeugbuch_liste.html" %}
+  <p><a href="/fuhrpark/fahrzeuge/{{ fahrzeug_id }}">zur Fahrzeugseite &rarr;</a></p>
+</div>
+{% endif %}

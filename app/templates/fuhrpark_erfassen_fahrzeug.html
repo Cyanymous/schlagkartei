@@ -1,0 +1,22 @@
+{# Von HTMX auf der Erfassen-Seite nachgeladen, sobald ein Fahrzeug gewählt ist.
+   Die data-Attribute sind die Grundlage für Literanzeige und Stand-Warnung. #}
+{% if fahrzeug %}
+<div class="fahrzeug-info" x-init="fahrzeug = {...$el.dataset}"
+     data-tank="{{ fahrzeug.tank_liter or '' }}" data-stand="{{ fahrzeug.stand if fahrzeug.stand is not none else '' }}" data-einheit="{{ fahrzeug.einheit or '' }}">
+  <p>
+    {% if fahrzeug.stand is not none %}Zuletzt <strong>{{ fahrzeug.stand | zahl }} {{ fahrzeug.einheit }}</strong> am {{ fahrzeug.stand_datum | datum_de }}{% elif fahrzeug.einheit %}Noch kein Zählerstand erfasst{% else %}Ohne Zähler{% endif %}{% if fahrzeug.tank_liter %} · Tank {{ fahrzeug.tank_liter | zahl }} L{% endif %}
+  </p>
+  {% if punkte %}
+  <div class="knopfreihe">
+    {% for p in punkte %}
+    <button type="button" class="vorschlag" data-art="{{ p.name }}" @click="art = $el.dataset.art" title="{{ p.text }}">
+      {{ p.name }} <span class="ampel ampel-{{ p.status }}">{{ {"rot": "überfällig", "gelb": "bald fällig", "gruen": "in Ordnung", "grau": "unklar"}[p.status] }}</span>
+    </button>
+    {% endfor %}
+  </div>
+  <p class="hinweis">Antippen übernimmt die Aufgabe als Art.</p>
+  {% endif %}
+</div>
+{% else %}
+<div x-init="fahrzeug = {}"></div>
+{% endif %}

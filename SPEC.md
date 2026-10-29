@@ -493,9 +493,16 @@ gibt kein Übernahmeskript.
 1. **Fuhrpark (Übersicht):** eine Zeile je aktivem Fahrzeug mit aktuellem
    Stand (und Datum der Ablesung) und den Fälligkeiten mit Ampel,
    Dringendstes zuerst. Im Menü steht die Zahl der überfälligen Punkte.
-2. **Erfassen:** handytaugliche Seite mit zwei Formularen: „Tanken“
-   (Fahrzeug, Datum, Zählerstand, Prozent oder genaue Liter, Beleg) und
-   „Sonstiger Eintrag“ (Fahrzeug, Datum, Art, Zählerstand, Bemerkung).
+2. **Erfassen:** handytaugliche Seite mit einem Formular (Fahrzeug, Datum,
+   Art, Zählerstand, Prozent oder genaue Liter, Beleg, Bemerkung). Mit
+   JavaScript (seit 29.10.2026): Die Tankfelder erscheinen nur bei Art
+   „Tanken“, die Liter stehen sofort da („90 % = 108 L“), nach Wahl des
+   Fahrzeugs erscheinen letzter Stand und Fälligkeiten (Antippen übernimmt
+   die Aufgabe als Art), ein Stand unter dem letzten wird schon beim Tippen
+   angemerkt, und gespeichert wird ohne Neuladen; Fahrzeug und Datum bleiben
+   für den nächsten Eintrag stehen. Ohne JavaScript sind alle Felder
+   sichtbar und das Formular speichert wie gewohnt. Der Prozentwert zählt
+   nur bei Art „Tanken“, weil das Formular ihn immer mitschickt.
 3. **Fahrzeugseite:** Stammdaten bearbeiten, Wartungsplan pflegen,
    Fahrzeugbuch des Fahrzeugs, Einträge bearbeiten und löschen. Der
    Wartungsplan zeigt je Aufgabe, wann sie zuletzt erledigt wurde (mit
@@ -524,20 +531,11 @@ gibt kein Übernahmeskript.
 - Das Datumsfeld bleibt das eingebaute des Browsers (Betreiber nutzt
   Chrome); keine Kalender-Bibliothek, keine Knöpfe „Heute/Gestern“.
 
-### Nächster Schritt: Erfassen-Seite mit HTMX + Alpine.js
+### Nächster Schritt
 
-Noch nicht begonnen; zuerst einen Plan vorlegen und Freigabe abwarten.
-Ideen aus dem Gespräch vom 12.10.2026:
+Die Erfassen-Seite ist seit 29.10.2026 mit HTMX 2.0.11 und Alpine.js 3.17.4
+umgebaut (siehe Oberfläche, Punkt 2); die Prüfung durch den Betreiber steht
+aus. Danach, jeweils nach Plan und Freigabe:
 
-- ein Formular statt zwei; die Tankfelder erscheinen nur bei Art „Tanken“
-- Liter sofort anzeigen („90 % = 108 L“)
-- nach Wahl des Fahrzeugs dessen letzten Stand und Wartungsaufgaben als
-  Vorschläge für die Art zeigen
-- Warnung vor dem Speichern, wenn der Stand kleiner ist als der letzte
-- speichern ohne Neuladen der Seite
-- später ebenso: Filter im Fahrzeugbuch ohne Knopf „Filtern“,
-  Wartungsaufgaben direkt in der Zeile bearbeiten
-
-HTMX und Alpine.js liegen noch nicht in `app/static/`; beim ersten Einsatz
-die aktuelle Version einmalig herunterladen und mit Versionsnummer im
-Dateinamen ablegen.
+- Filter im Fahrzeugbuch ohne Knopf „Filtern“
+- Wartungsaufgaben direkt in der Zeile bearbeiten

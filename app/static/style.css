@@ -741,6 +741,23 @@ li.ereignis {
   font-size: 0.9rem;
 }
 
+.fahrzeug-info p {
+  margin: 0.75rem 0 0.4rem;
+}
+
+button.vorschlag {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-weight: normal;
+  padding: 0.35rem 0.6rem;
+}
+
+button.vorschlag:hover {
+  background: var(--hover);
+  filter: none;
+}
+
 .liter-vorschau {
   align-self: center;
   padding-top: 1.2rem;

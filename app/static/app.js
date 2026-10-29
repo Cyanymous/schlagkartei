@@ -15,21 +15,13 @@ function zahlDe(wert) {
 document.addEventListener("alpine:init", () => {
   // Fuhrpark → Erfassen: Tankfelder nur bei „Tanken“, Liter und Warnungen sofort.
   Alpine.data("erfassen", () => ({
-    fahrzeug: {},  // data-Attribute der gewählten Option: tank, stand, einheit
+    fahrzeug: {},  // tank, stand, einheit; setzt der nachgeladene Fahrzeug-Block
     art: "",
     stand: "",
     prozent: "90",
     liter: "",
     beleg: "",
     bemerkung: "",
-
-    init() {
-      this.waehlen();
-    },
-
-    waehlen() {
-      this.fahrzeug = this.$refs.fahrzeug.selectedOptions[0]?.dataset ?? {};
-    },
 
     get tanken() {
       return this.art.trim().toLowerCase() === "tanken";

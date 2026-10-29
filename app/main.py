@@ -715,6 +715,16 @@ def fuhrpark_erfassen(request: Request) -> HTMLResponse:
     )
 
 
+@app.get("/fuhrpark/erfassen/fahrzeug", response_class=HTMLResponse)
+def fuhrpark_erfassen_fahrzeug(request: Request) -> HTMLResponse:
+    with _db() as conn:
+        fahrzeug = fuhrpark.get_fahrzeug(conn, _jahr(request.query_params.get("fahrzeug_id", ""), 0))
+        punkte = fuhrpark.wartungsplan(conn, fahrzeug, date.today()) if fahrzeug else []
+    return templates.TemplateResponse(
+        request, "fuhrpark_erfassen_fahrzeug.html", {"fahrzeug": fahrzeug, "punkte": punkte}
+    )
+
+
 def _eintrag_formular(request: Request, conn, eintrag: dict, fehler: str | None = None) -> HTMLResponse:
     # Inaktive Fahrzeuge nur anbieten, wenn der Eintrag schon zu einem gehört.
     fahrzeuge = [f for f in fuhrpark.get_fahrzeuge(conn) if f["aktiv"] or f["id"] == eintrag.get("fahrzeug_id")]
@@ -736,8 +746,12 @@ async def _eintrag_speichern(request: Request, eintrag_id: int | None):
     f = await _formular(request)
     daten = _eintrag_daten(f)
     ziel = _feld(f, "zurueck")
+    # Von HTMX (Erfassen-Seite) gesendet: nur das Ergebnis zurückgeben, die Seite bleibt stehen.
+    htmx = request.headers.get("HX-Request") == "true"
     with _db() as conn:
         gespeichert_id, fehler = fuhrpark.save_eintrag(conn, eintrag_id, daten)
+        if fehler and htmx:
+            return templates.TemplateResponse(request, "fuhrpark_erfassen_ergebnis.html", {"fehler": fehler})
         if fehler:
             # Formular mit den Eingaben erneut zeigen, damit auf dem Handy nichts neu getippt werden muss.
             eingabe = daten | {
@@ -752,6 +766,19 @@ async def _eintrag_speichern(request: Request, eintrag_id: int | None):
         if e["liter"] is not None:
             hinweis += f", {fuhrpark.zahl_de(e['liter'])} L" + (f" ({e['prozent']} %)" if e["prozent"] else "")
         warnung = fuhrpark.zaehlerstand_hinweis(conn, gespeichert_id)
+        if htmx:
+            return templates.TemplateResponse(
+                request,
+                "fuhrpark_erfassen_ergebnis.html",
+                {
+                    "hinweis": hinweis + ".",
+                    "warnung": warnung,
+                    "eintraege": fuhrpark.get_eintraege(conn, fahrzeug_id=str(e["fahrzeug_id"]))[:5],
+                    "fahrzeug_id": e["fahrzeug_id"],
+                },
+                # Leert das Formular und lädt Stand und Fälligkeiten des Fahrzeugs neu.
+                headers={"HX-Trigger": "eintrag-gespeichert"},
+            )
     if not ziel.startswith("/"):
         ziel = f"/fuhrpark/fahrzeuge/{e['fahrzeug_id']}"
     return _zurueck(ziel, warnung, hinweis + ".")

@@ -6,15 +6,16 @@
 
 {# Ein Formular für alle Einträge. Ohne JavaScript sind alle Felder sichtbar;
    mit JavaScript erscheinen die Tankfelder nur bei der Art „Tanken“. #}
-<form class="karte" method="post" action="/fuhrpark/eintraege" x-data="erfassen">
+<form class="karte" method="post" action="/fuhrpark/eintraege" x-data="erfassen"
+      hx-post="/fuhrpark/eintraege" hx-target="#ergebnis" hx-disabled-elt="find button[type=submit]"
+      @eintrag-gespeichert="leeren()">
   <input type="hidden" name="zurueck" value="{{ '/fuhrpark/fahrzeuge/' ~ vorauswahl if vorauswahl else '/fuhrpark/erfassen' }}">
   <div class="formzeile">
     <label>Fahrzeug
-      <select name="fahrzeug_id" id="fahrzeug" required x-ref="fahrzeug" @change="waehlen()">
+      <select name="fahrzeug_id" id="fahrzeug" required>
         <option value="">– bitte wählen –</option>
         {% for f in fahrzeuge %}
-        <option value="{{ f.id }}" {% if f.id == vorauswahl %}selected{% endif %}
-                data-tank="{{ f.tank_liter or '' }}" data-stand="{{ f.stand if f.stand is not none else '' }}" data-einheit="{{ f.einheit or '' }}">
+        <option value="{{ f.id }}" {% if f.id == vorauswahl %}selected{% endif %}>
           {{ f.name }}{% if f.stand is not none %} · zuletzt {{ f.stand | zahl }} {{ f.einheit }}{% endif %}
         </option>
         {% endfor %}
@@ -24,6 +25,8 @@
     <label>Art <input name="art" list="arten" required placeholder="z. B. Tanken, Reparatur" x-model="art"></label>
     <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10" x-model="stand"></label>
   </div>
+  <div id="fahrzeug-info" hx-get="/fuhrpark/erfassen/fahrzeug" hx-include="#fahrzeug"
+       hx-trigger="load, change from:#fahrzeug, eintrag-gespeichert from:body"></div>
   <template x-if="standWarnung"><p class="hinweis-warnung" x-text="standWarnung"></p></template>
 
   <div class="formzeile" x-show="tanken">
@@ -50,6 +53,7 @@
     genaue Liter vom Beleg haben Vorrang. Für einen erledigten Wartungspunkt die Art genau so nennen
     wie die Aufgabe im Wartungsplan (z. B. „Ölwechsel“) und den Zählerstand eintragen.</p>
 </form>
+<div id="ergebnis" aria-live="polite"></div>
 
 {% if not fahrzeuge %}
 <p class="hinweis">Noch keine Fahrzeuge angelegt – zuerst unter <a href="/fuhrpark">Fuhrpark</a> anlegen.</p>
