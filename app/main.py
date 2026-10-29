@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import io
 import re
 from contextlib import asynccontextmanager, contextmanager
@@ -162,6 +163,20 @@ def _anzahl_ueberfaellig() -> int:
 
 
 templates.env.globals["anzahl_ueberfaellig"] = _anzahl_ueberfaellig
+
+
+def _statisch(name: str) -> str:
+    """URL einer eigenen Datei in static/ mit Inhalts-Prüfsumme.
+
+    Ohne sie hält der Browser nach einer Änderung noch die alte Fassung von
+    style.css oder app.js im Zwischenspeicher, und die Seite sieht kaputt aus.
+    Die Bibliotheken tragen ihre Version schon im Dateinamen.
+    """
+    inhalt = (Path(__file__).parent / "static" / name).read_bytes()
+    return f"/static/{name}?v={hashlib.sha256(inhalt).hexdigest()[:10]}"
+
+
+templates.env.globals["statisch"] = _statisch
 templates.env.filters["ortszeit"] = _ortszeit
 templates.env.filters["datum_de"] = _datum_de
 

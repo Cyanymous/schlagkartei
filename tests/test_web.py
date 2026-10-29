@@ -1,3 +1,4 @@
+import re
 import shutil
 from pathlib import Path
 
@@ -134,3 +135,9 @@ def test_import_knopf_meldet_entfernte_datei(client, tmp_path):
     assert r.status_code == 200
     assert "Entfernt, weil nicht mehr im Export-Ordner: 2026-05-04-Benevia.zip." in r.text
     assert "BENEVIA" not in client.get("/").text
+
+
+def test_eigene_dateien_mit_pruefsumme_gegen_alten_zwischenspeicher(client):
+    seite = client.get("/").text
+    assert re.search(r'href="/static/style\.css\?v=[0-9a-f]{10}"', seite)
+    assert re.search(r'src="/static/app\.js\?v=[0-9a-f]{10}"', seite)
