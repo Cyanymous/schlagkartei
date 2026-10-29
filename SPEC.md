@@ -110,10 +110,11 @@ Web-Oberfläche (Browser im Hofnetz)
 
 ### JavaScript
 
-Entschieden am 12.10.2026; vorher galt „JavaScript nur sparsam“. JavaScript
-wird gezielt eingesetzt, wo es die Bedienung spürbar verbessert, vor allem
-auf dem Handy: Erfassen ohne Neuladen, Felder je nach Auswahl ein- und
-ausblenden, Ergebnisse sofort anzeigen (z. B. Liter aus Prozent).
+JavaScript ist ausdrücklich erlaubt, wird aber sparsam eingesetzt (bestätigt
+vom Betreiber am 29.10.2026): nur dort, wo es die Bedienung spürbar
+verbessert, vor allem auf dem Handy – Erfassen ohne Neuladen, Felder je nach
+Auswahl ein- und ausblenden, Ergebnisse sofort anzeigen (z. B. Liter aus
+Prozent). Wo eine normale Seite mit Formular genügt, bleibt es dabei.
 
 - Keine Ressourcen von CDNs: Die App läuft im internen Netz und muss ohne
   Internet funktionieren. Bibliotheken liegen als einzelne Dateien mit

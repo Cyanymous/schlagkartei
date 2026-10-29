@@ -31,11 +31,11 @@ heutigen Bedarf.
 - Python 3.12+, FastAPI, Uvicorn, Jinja2
 - SQLite über `sqlite3` aus der Standardbibliothek, reines SQL, kein ORM
 - Schemaänderungen als nummerierte Dateien in `migrations/`
-- JavaScript mit HTMX + Alpine.js gezielt dort, wo es die Bedienung
-  verbessert (SPEC.md Abschnitt 4, „JavaScript“): eigener Code in
-  `app/static/app.js`, Bibliotheken als lokale Dateien; der Server prüft und
-  berechnet alles, was gespeichert wird; Formulare funktionieren auch ohne
-  JavaScript
+- JavaScript ist ausdrücklich erlaubt, aber sparsam: HTMX + Alpine.js nur
+  dort, wo es die Bedienung spürbar verbessert (SPEC.md Abschnitt 4,
+  „JavaScript“); eigener Code in `app/static/app.js`, Bibliotheken als
+  lokale Dateien; der Server prüft und berechnet alles, was gespeichert
+  wird; Formulare funktionieren auch ohne JavaScript
 - Tests: pytest
 
 ## Befehle
