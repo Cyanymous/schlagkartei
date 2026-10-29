@@ -112,9 +112,20 @@ Web-Oberfläche (Browser im Hofnetz)
 
 JavaScript ist ausdrücklich erlaubt, wird aber sparsam eingesetzt (bestätigt
 vom Betreiber am 29.10.2026): nur dort, wo es die Bedienung spürbar
-verbessert, vor allem auf dem Handy – Erfassen ohne Neuladen, Felder je nach
-Auswahl ein- und ausblenden, Ergebnisse sofort anzeigen (z. B. Liter aus
-Prozent). Wo eine normale Seite mit Formular genügt, bleibt es dabei.
+verbessert – Erfassen ohne Neuladen, Felder je nach Auswahl ein- und
+ausblenden, Ergebnisse sofort anzeigen (z. B. Liter aus Prozent). Wo eine
+normale Seite mit Formular genügt, bleibt es dabei.
+
+### Aussehen
+
+Die App wird am PC bedient; eine eigene Handyansicht gibt es nicht
+(Betreiber, 29.10.2026). Stil: kompakt wie ein Arbeitsprogramm, aber so,
+dass man sie gern benutzt – Menü als Seitenleiste links, flache Karten mit
+feiner Linie, dichte Tabellen, Status als Etikett mit Punkt, Grün als
+Akzentfarbe, Dunkelmodus nach Systemeinstellung. Auf schmalen Fenstern wird
+die Seitenleiste zur Leiste oben, damit nichts kaputtgeht; mehr Aufwand
+fließt dort nicht hinein. Alles steht in `app/static/style.css`, Farben nur
+als Variablen am Anfang der Datei.
 
 - Keine Ressourcen von CDNs: Die App läuft im internen Netz und muss ohne
   Internet funktionieren. Bibliotheken liegen als einzelne Dateien mit
@@ -493,14 +504,14 @@ gibt kein Übernahmeskript.
 1. **Fuhrpark (Übersicht):** eine Zeile je aktivem Fahrzeug mit aktuellem
    Stand (und Datum der Ablesung) und den Fälligkeiten mit Ampel,
    Dringendstes zuerst. Im Menü steht die Zahl der überfälligen Punkte.
-2. **Erfassen:** handytaugliche Seite mit einem Formular (Fahrzeug, Datum,
+2. **Erfassen:** eine Seite mit einem Formular (Fahrzeug, Datum,
    Art, Zählerstand, Prozent oder genaue Liter, Beleg, Bemerkung). Mit
    JavaScript (seit 29.10.2026): Die Tankfelder erscheinen nur bei Art
    „Tanken“, die Liter stehen sofort da („90 % = 108 L“), nach Wahl des
-   Fahrzeugs erscheinen letzter Stand und Fälligkeiten (Antippen übernimmt
+   Fahrzeugs erscheinen letzter Stand und Fälligkeiten (ein Klick übernimmt
    die Aufgabe als Art), ein Stand unter dem letzten wird schon beim Tippen
    angemerkt, und gespeichert wird ohne Neuladen; Fahrzeug und Datum bleiben
-   für den nächsten Eintrag stehen. Unter dem Formular stehen die letzten 10
+   für den nächsten Eintrag stehen. Neben dem Formular stehen die letzten 10
    Einträge des gewählten Fahrzeugs mit Verweis aufs Fahrzeugbuch.
    „Erledigen“ an einer Fälligkeit (Übersicht: alles außer grün;
    Fahrzeugseite: jede Aufgabe) öffnet diese Seite mit Fahrzeug und Art

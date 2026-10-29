@@ -6,12 +6,14 @@
 
 {# Ein Formular für alle Einträge. Ohne JavaScript sind alle Felder sichtbar;
    mit JavaScript erscheinen die Tankfelder nur bei der Art „Tanken“. #}
+<div class="erfassen-raster">
+<div>
 <form class="karte" method="post" action="/fuhrpark/eintraege" x-data="erfassen" data-art="{{ art }}"
       hx-post="/fuhrpark/eintraege" hx-target="#ergebnis" hx-disabled-elt="find button[type=submit]"
       @eintrag-gespeichert="leeren()">
   <input type="hidden" name="zurueck" value="{{ '/fuhrpark/fahrzeuge/' ~ vorauswahl if vorauswahl else '/fuhrpark/erfassen' }}">
-  <div class="formzeile">
-    <label>Fahrzeug
+  <div class="erfassen-felder">
+    <label class="doppelt">Fahrzeug
       <select name="fahrzeug_id" id="fahrzeug" required>
         <option value="">– bitte wählen –</option>
         {% for f in fahrzeuge %}
@@ -23,38 +25,38 @@
     </label>
     <label>Datum <input type="date" name="datum" required value="{{ heute }}"></label>
     <label>Art <input name="art" list="arten" required placeholder="z. B. Tanken, Reparatur" value="{{ art }}" x-model="art"></label>
-    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10" x-model="stand" {% if art %}autofocus{% endif %}></label>
   </div>
-  <div id="fahrzeug-info" hx-get="/fuhrpark/erfassen/fahrzeug" hx-include="#fahrzeug"
+  {# hx-target="this", sonst erbt der Block das Ziel #ergebnis vom Formular. #}
+  <div id="fahrzeug-info" hx-get="/fuhrpark/erfassen/fahrzeug" hx-include="#fahrzeug" hx-target="this"
        hx-trigger="load, change from:#fahrzeug, eintrag-gespeichert from:body"></div>
-  <template x-if="standWarnung"><p class="hinweis-warnung" x-text="standWarnung"></p></template>
 
-  <div class="formzeile" x-show="tanken">
-    <label>Getankt
-      <select name="prozent" x-model="prozent">
-        {% for p in prozente %}<option value="{{ p }}" {% if p == 90 %}selected{% endif %}>{{ p }} % vom Tank</option>{% endfor %}
-      </select>
-    </label>
-    <label>oder genaue Liter <input name="liter" inputmode="decimal" size="7" placeholder="vom Beleg" x-model="liter"></label>
-    <template x-if="literText"><span class="liter-vorschau" x-text="literText"></span></template>
-  </div>
-
-  <div class="formzeile">
-    <label>Beleg-Nr. <input name="beleg" size="12" x-model="beleg"></label>
-    <label class="breit">Bemerkung
+  <div class="erfassen-felder">
+    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" x-model="stand" {% if art %}autofocus{% endif %}></label>
+    <div class="tankfelder" x-show="tanken">
+      <label>Getankt
+        <select name="prozent" x-model="prozent">
+          {% for p in prozente %}<option value="{{ p }}" {% if p == 90 %}selected{% endif %}>{{ p }} % vom Tank</option>{% endfor %}
+        </select>
+      </label>
+      <label>oder genaue Liter <input name="liter" inputmode="decimal" placeholder="vom Beleg" x-model="liter"></label>
+    </div>
+    <label>Beleg-Nr. <input name="beleg" x-model="beleg"></label>
+    <template x-if="standWarnung"><p class="hinweis-warnung ganz" x-text="standWarnung"></p></template>
+    <template x-if="tanken && literText"><p class="ganz" :class="Number(fahrzeug.tank) ? 'liter-vorschau' : 'hinweis-warnung'" x-text="literText"></p></template>
+    <label class="ganz">Bemerkung
       <textarea name="bemerkung" rows="3" placeholder="z. B. was getauscht wurde, Zustand vor dem TÜV" x-model="bemerkung"></textarea>
     </label>
   </div>
   <datalist id="arten">{% for a in arten %}<option value="{{ a }}">{% endfor %}</datalist>
   <div class="formzeile">
     <button type="submit">Speichern</button>
+    <span class="hinweis">Tanken ohne Liter: Die App rechnet aus Prozent und Tankgröße.</span>
   </div>
-  <p class="hinweis">Beim Tanken ohne Literangabe rechnet die App die Menge aus Prozent und Tankgröße;
-    genaue Liter vom Beleg haben Vorrang. Für einen erledigten Wartungspunkt die Art genau so nennen
-    wie die Aufgabe im Wartungsplan (z. B. „Ölwechsel“) und den Zählerstand eintragen.</p>
 </form>
 <div id="ergebnis" aria-live="polite"></div>
+</div>
 <section id="fahrzeug-buch"></section>
+</div>
 
 {% if not fahrzeuge %}
 <p class="hinweis">Noch keine Fahrzeuge angelegt – zuerst unter <a href="/fuhrpark">Fuhrpark</a> anlegen.</p>

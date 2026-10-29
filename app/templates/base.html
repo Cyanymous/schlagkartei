@@ -11,19 +11,26 @@
   <script src="/static/alpine-3.17.4.min.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <span class="brand">Schlagkartei</span>
-    {% set pfad = request.url.path %}
+  {% set pfad = request.url.path %}
+  {% macro punkt(href, text, aktiv) %}<a href="{{ href }}" {% if aktiv %}class="aktiv" aria-current="page"{% endif %}>{{ text }}{{ caller() if caller }}</a>{% endmacro %}
+  <aside class="seitenleiste">
+    <a class="brand" href="/"><span class="brand-zeichen">S</span>Schlagkartei</a>
     <nav>
-      <a href="/schlaege" {% if pfad.startswith("/schlaege") %}class="aktiv"{% endif %}>Schläge</a>
-      <a href="/anbauplan" {% if pfad.startswith("/anbauplan") %}class="aktiv"{% endif %}>Anbauplan</a>
-      <a href="/feldarbeiten" {% if pfad.startswith("/feldarbeiten") %}class="aktiv"{% endif %}>Feldarbeiten</a>
-      <a href="/" {% if pfad == "/" or pfad.startswith("/anwendung") %}class="aktiv"{% endif %}>Pflanzenschutz</a>
-      <a href="/fuhrpark" {% if pfad.startswith("/fuhrpark") %}class="aktiv"{% endif %}>Fuhrpark{% set n = anzahl_ueberfaellig() %}{% if n %} <span class="menuezahl" title="{{ n }} überfällig">{{ n }}</span>{% endif %}</a>
-      <a href="/kulturen" {% if pfad.startswith("/kulturen") %}class="aktiv"{% endif %}>Kulturen</a>
-      <a href="/import" {% if pfad.startswith("/import") %}class="aktiv"{% endif %}>Import</a>
+      <span class="nav-gruppe">Acker</span>
+      {{ punkt("/schlaege", "Schläge", pfad.startswith("/schlaege")) }}
+      {{ punkt("/anbauplan", "Anbauplan", pfad.startswith("/anbauplan")) }}
+      {{ punkt("/feldarbeiten", "Feldarbeiten", pfad.startswith("/feldarbeiten")) }}
+      {{ punkt("/", "Pflanzenschutz", pfad == "/" or pfad.startswith("/anwendung")) }}
+      {{ punkt("/kulturen", "Kulturen", pfad.startswith("/kulturen")) }}
+      <span class="nav-gruppe">Fuhrpark</span>
+      {% set n = anzahl_ueberfaellig() %}
+      {% call punkt("/fuhrpark", "Übersicht", pfad == "/fuhrpark" or pfad.startswith("/fuhrpark/fahrzeuge")) %}{% if n %} <span class="menuezahl" title="{{ n }} überfällig">{{ n }}</span>{% endif %}{% endcall %}
+      {{ punkt("/fuhrpark/erfassen", "Erfassen", pfad.startswith("/fuhrpark/erfassen")) }}
+      {{ punkt("/fuhrpark/buch", "Fahrzeugbuch", pfad.startswith("/fuhrpark/buch") or pfad.startswith("/fuhrpark/eintraege")) }}
+      <span class="nav-gruppe">Daten</span>
+      {{ punkt("/import", "Import", pfad.startswith("/import")) }}
     </nav>
-  </header>
+  </aside>
   <main>
     {% set meldung = fehler or request.query_params.get("fehler") %}
     {% if meldung %}
