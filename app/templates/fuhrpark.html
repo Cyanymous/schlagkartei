@@ -23,7 +23,8 @@
       <td class="zahl">{% if f.stand is not none %}{{ f.stand | zahl }} {{ f.einheit }}<small class="unterzeile">{{ f.stand_datum | datum_de }}</small>{% elif f.einheit %}–{% endif %}</td>
       <td>
         {% for p in z.punkte %}
-        <div class="faelligkeit"><span class="ampel ampel-{{ p.status }}">{{ p.name }}</span> {{ p.text }}</div>
+        <div class="faelligkeit"><span class="ampel ampel-{{ p.status }}">{{ p.name }}</span> {{ p.text }}
+          {% if p.status != "gruen" %}<a class="erledigen" href="/fuhrpark/erfassen?fahrzeug={{ f.id }}&art={{ p.name | urlencode }}">erledigen</a>{% endif %}</div>
         {% else %}
         <span class="hinweis">kein Wartungsplan</span>
         {% endfor %}

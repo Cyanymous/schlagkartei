@@ -6,7 +6,7 @@
 
 {# Ein Formular für alle Einträge. Ohne JavaScript sind alle Felder sichtbar;
    mit JavaScript erscheinen die Tankfelder nur bei der Art „Tanken“. #}
-<form class="karte" method="post" action="/fuhrpark/eintraege" x-data="erfassen"
+<form class="karte" method="post" action="/fuhrpark/eintraege" x-data="erfassen" data-art="{{ art }}"
       hx-post="/fuhrpark/eintraege" hx-target="#ergebnis" hx-disabled-elt="find button[type=submit]"
       @eintrag-gespeichert="leeren()">
   <input type="hidden" name="zurueck" value="{{ '/fuhrpark/fahrzeuge/' ~ vorauswahl if vorauswahl else '/fuhrpark/erfassen' }}">
@@ -22,8 +22,8 @@
       </select>
     </label>
     <label>Datum <input type="date" name="datum" required value="{{ heute }}"></label>
-    <label>Art <input name="art" list="arten" required placeholder="z. B. Tanken, Reparatur" x-model="art"></label>
-    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10" x-model="stand"></label>
+    <label>Art <input name="art" list="arten" required placeholder="z. B. Tanken, Reparatur" value="{{ art }}" x-model="art"></label>
+    <label>Zählerstand <input name="zaehlerstand" inputmode="decimal" size="10" x-model="stand" {% if art %}autofocus{% endif %}></label>
   </div>
   <div id="fahrzeug-info" hx-get="/fuhrpark/erfassen/fahrzeug" hx-include="#fahrzeug"
        hx-trigger="load, change from:#fahrzeug, eintrag-gespeichert from:body"></div>
@@ -54,6 +54,7 @@
     wie die Aufgabe im Wartungsplan (z. B. „Ölwechsel“) und den Zählerstand eintragen.</p>
 </form>
 <div id="ergebnis" aria-live="polite"></div>
+<section id="fahrzeug-buch"></section>
 
 {% if not fahrzeuge %}
 <p class="hinweis">Noch keine Fahrzeuge angelegt – zuerst unter <a href="/fuhrpark">Fuhrpark</a> anlegen.</p>

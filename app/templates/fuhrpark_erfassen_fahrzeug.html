@@ -1,4 +1,5 @@
-{# Von HTMX auf der Erfassen-Seite nachgeladen, sobald ein Fahrzeug gewählt ist.
+{# Von HTMX auf der Erfassen-Seite nachgeladen, sobald ein Fahrzeug gewählt ist
+   (auch nach jedem Speichern).
    Die data-Attribute sind die Grundlage für Literanzeige und Stand-Warnung. #}
 {% if fahrzeug %}
 <div class="fahrzeug-info" x-init="fahrzeug = {...$el.dataset}"
@@ -20,3 +21,15 @@
 {% else %}
 <div x-init="fahrzeug = {}"></div>
 {% endif %}
+
+{# Ersetzt per hx-swap-oob den Bereich unter dem Formular. #}
+<section id="fahrzeug-buch" hx-swap-oob="true" {% if fahrzeug %}class="karte"{% endif %}>
+  {% if fahrzeug %}
+  <h2>Fahrzeugbuch {{ fahrzeug.name }}</h2>
+  {% set mit_fahrzeug = false %}
+  {% include "fahrzeugbuch_liste.html" %}
+  {% if anzahl_eintraege > eintraege | length %}
+  <p><a href="/fuhrpark/buch?fahrzeug={{ fahrzeug.id }}">alle {{ anzahl_eintraege }} Einträge im Fahrzeugbuch &rarr;</a></p>
+  {% endif %}
+  {% endif %}
+</section>

@@ -500,7 +500,11 @@ gibt kein Übernahmeskript.
    Fahrzeugs erscheinen letzter Stand und Fälligkeiten (Antippen übernimmt
    die Aufgabe als Art), ein Stand unter dem letzten wird schon beim Tippen
    angemerkt, und gespeichert wird ohne Neuladen; Fahrzeug und Datum bleiben
-   für den nächsten Eintrag stehen. Ohne JavaScript sind alle Felder
+   für den nächsten Eintrag stehen. Unter dem Formular stehen die letzten 10
+   Einträge des gewählten Fahrzeugs mit Verweis aufs Fahrzeugbuch.
+   „Erledigen“ an einer Fälligkeit (Übersicht: alles außer grün;
+   Fahrzeugseite: jede Aufgabe) öffnet diese Seite mit Fahrzeug und Art
+   vorbelegt, der Cursor steht im Zählerstand. Ohne JavaScript sind alle Felder
    sichtbar und das Formular speichert wie gewohnt. Der Prozentwert zählt
    nur bei Art „Tanken“, weil das Formular ihn immer mitschickt.
 3. **Fahrzeugseite:** Stammdaten bearbeiten, Wartungsplan pflegen,

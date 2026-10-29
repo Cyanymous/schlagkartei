@@ -208,6 +208,7 @@ def test_erfassen_fahrzeugblock(client):
     assert "Zuletzt <strong>3.054 h</strong> am 18.01.2026 · Tank 120 L" in block
     assert 'data-tank="120.0" data-stand="3054.0" data-einheit="h"' in block
     assert 'data-art="Ölwechsel"' in block and "in Ordnung" in block
+    assert 'id="fahrzeug-buch" hx-swap-oob="true"' in block and "18.01.2026" in block
     assert 'x-init="fahrzeug = {}"' in client.get("/fuhrpark/erfassen/fahrzeug?fahrzeug_id=").text
 
 
@@ -218,7 +219,6 @@ def test_speichern_per_htmx_ohne_weiterleitung(client):
     assert r.status_code == 200
     assert r.headers["HX-Trigger"] == "eintrag-gespeichert"
     assert "Gespeichert: JD 5720 – Tanken, 108 L (90 %)." in r.text
-    assert "Letzte Einträge" in r.text and "≈ 108 L" in r.text
     assert "<html" not in r.text
 
     r = client.post("/fuhrpark/eintraege", data=daten | {"fahrzeug_id": ""}, headers={"HX-Request": "true"})
@@ -229,3 +229,22 @@ def test_speichern_per_htmx_ohne_weiterleitung(client):
     # Ohne JavaScript bleibt es bei der Weiterleitung.
     r = client.post("/fuhrpark/eintraege", data=daten, follow_redirects=False)
     assert r.status_code == 303
+
+
+def test_erfassen_zeigt_die_letzten_zehn_eintraege(client):
+    _fahrzeug_anlegen(client)
+    for tag in range(1, 13):
+        client.post("/fuhrpark/eintraege", data={"fahrzeug_id": "1", "datum": f"2026-03-{tag:02d}", "art": "Zählerstand", "zaehlerstand": str(tag)})
+    block = client.get("/fuhrpark/erfassen/fahrzeug?fahrzeug_id=1").text
+    assert "12.03.2026" in block and "03.03.2026" in block and "02.03.2026" not in block
+    assert "alle 12 Einträge im Fahrzeugbuch" in block
+
+
+def test_faellige_aufgabe_erledigen(client):
+    _fahrzeug_anlegen(client)
+    client.post("/fuhrpark/fahrzeuge/1/aufgaben", data={"aufgabe": "Ölwechsel", "intervall_zaehler": "500"})
+    link = "/fuhrpark/erfassen?fahrzeug=1&art=%C3%96lwechsel"
+    assert f'href="{link}"' in client.get("/fuhrpark").text
+    seite = client.get(link).text
+    assert 'data-art="Ölwechsel"' in seite and 'value="Ölwechsel"' in seite
+    assert '<option value="1" selected>' in seite

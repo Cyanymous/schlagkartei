@@ -709,6 +709,8 @@ def fuhrpark_erfassen(request: Request) -> HTMLResponse:
             "fahrzeuge": fahrzeuge,
             "arten": arten,
             "vorauswahl": _jahr(request.query_params.get("fahrzeug", ""), 0),
+            # Vorbelegt, wenn man von einer Fälligkeit aus auf „erledigen“ tippt.
+            "art": request.query_params.get("art", ""),
             "prozente": fuhrpark.PROZENTE,
             "heute": datetime.now().date().isoformat(),
         },
@@ -720,8 +722,11 @@ def fuhrpark_erfassen_fahrzeug(request: Request) -> HTMLResponse:
     with _db() as conn:
         fahrzeug = fuhrpark.get_fahrzeug(conn, _jahr(request.query_params.get("fahrzeug_id", ""), 0))
         punkte = fuhrpark.wartungsplan(conn, fahrzeug, date.today()) if fahrzeug else []
+        eintraege = fuhrpark.get_eintraege(conn, fahrzeug_id=str(fahrzeug["id"])) if fahrzeug else []
     return templates.TemplateResponse(
-        request, "fuhrpark_erfassen_fahrzeug.html", {"fahrzeug": fahrzeug, "punkte": punkte}
+        request,
+        "fuhrpark_erfassen_fahrzeug.html",
+        {"fahrzeug": fahrzeug, "punkte": punkte, "eintraege": eintraege[:10], "anzahl_eintraege": len(eintraege)},
     )
 
 
@@ -770,13 +775,8 @@ async def _eintrag_speichern(request: Request, eintrag_id: int | None):
             return templates.TemplateResponse(
                 request,
                 "fuhrpark_erfassen_ergebnis.html",
-                {
-                    "hinweis": hinweis + ".",
-                    "warnung": warnung,
-                    "eintraege": fuhrpark.get_eintraege(conn, fahrzeug_id=str(e["fahrzeug_id"]))[:5],
-                    "fahrzeug_id": e["fahrzeug_id"],
-                },
-                # Leert das Formular und lädt Stand und Fälligkeiten des Fahrzeugs neu.
+                {"hinweis": hinweis + ".", "warnung": warnung},
+                # Leert das Formular und lädt Stand, Fälligkeiten und Fahrzeugbuch neu.
                 headers={"HX-Trigger": "eintrag-gespeichert"},
             )
     if not ziel.startswith("/"):

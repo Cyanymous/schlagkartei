@@ -23,6 +23,11 @@ document.addEventListener("alpine:init", () => {
     beleg: "",
     bemerkung: "",
 
+    // Von „erledigen“ an einer Fälligkeit vorbelegt; x-model würde den Wert sonst leeren.
+    init() {
+      this.art = this.$el.dataset.art || "";
+    },
+
     get tanken() {
       return this.art.trim().toLowerCase() === "tanken";
     },

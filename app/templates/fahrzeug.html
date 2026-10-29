@@ -62,7 +62,10 @@
           <span class="ampel ampel-{{ p.status }}">{{ {"rot": "überfällig", "gelb": "bald fällig", "gruen": "in Ordnung", "grau": "unklar"}[p.status] }}</span>
           <small class="unterzeile">{{ p.text }}</small>
         </td>
-        <td class="aktion">{% if p.id %}<a href="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}?bearbeiten={{ p.id }}#wartung">bearbeiten</a>{% else %}<a href="#stammdaten">in Stammdaten</a>{% endif %}</td>
+        <td class="aktion">
+          {% if fahrzeug.aktiv %}<a class="erledigen" href="/fuhrpark/erfassen?fahrzeug={{ fahrzeug.id }}&art={{ p.name | urlencode }}">erledigen</a>{% endif %}
+          {% if p.id %}<a href="/fuhrpark/fahrzeuge/{{ fahrzeug.id }}?bearbeiten={{ p.id }}#wartung">bearbeiten</a>{% else %}<a href="#stammdaten">in Stammdaten</a>{% endif %}
+        </td>
       </tr>
       {% endif %}
       {% else %}
