@@ -442,8 +442,10 @@ Entschieden am 12.10.2026. Ersetzt die Tabelle „Fahrzeuge und Maschinen.ods“
 des Betreibers (Blätter Wartung, Tanken, Fahrzeuge, Maschinen und Geräte).
 Alle Tabellen sind eigene Daten (Abschnitt 5, Regel 2). Die Tabelle selbst ist
 nur Vorlage, enthält echte Daten und liegt deshalb nicht im Repo
-(`.gitignore`). Der Betreiber überträgt den Bestand nach dem Bau von Hand; es
-gibt kein Übernahmeskript.
+(`.gitignore`). Im Repo gibt es kein Übernahmeskript. Der Bestand wurde am
+29.10.2026 einmalig mit einem Wegwerf-Skript außerhalb des Repos aus der
+Tabelle übernommen, mit den Korrekturen des Betreibers; Fehlendes (z. B.
+Tankgrößen) pflegt er in der App nach.
 
 ### Fachliche Entscheidungen
 
