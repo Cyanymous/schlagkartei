@@ -488,7 +488,10 @@ Tankgrößen) pflegt er in der App nach.
   trägt der Betreiber die neue Fälligkeit ein.
 - **Ampel:** rot = überfällig, gelb = bald fällig (weniger als 10 % des
   Zählerintervalls oder weniger als 30 Tage übrig), grün = in Ordnung, grau
-  = noch nie erledigt oder Zählerstand fehlt.
+  = noch nie erledigt oder Zählerstand fehlt. Beim TÜV anders (Betreiber,
+  29.10.2026): grün bis zum Monat der Plakette, gelb ab dem 1. dieses
+  Monats, rot erst drei Monate später (Plakette 11/2026: gelb November bis
+  Januar, rot ab 01.02.2027).
 
 ### Tabellen
 

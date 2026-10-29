@@ -185,14 +185,15 @@ def test_faelligkeit_grau():
     assert f == {"status": "grau", "text": "Zählerstand beim letzten Mal fehlt"}
 
 
-def test_tuev_gilt_bis_monatsende():
-    assert fp.tuev_faelligkeit("2026-10", HEUTE) == {"status": "gelb", "text": "10/2026 (noch 19 Tage)"}
-    assert fp.tuev_faelligkeit("2026-09", HEUTE)["status"] == "rot"
-    assert fp.tuev_faelligkeit("2027-03", HEUTE)["status"] == "gruen"
+def test_tuev_gelb_im_monat_rot_nach_drei_monaten():
+    assert fp.tuev_faelligkeit("2026-11", HEUTE) == {"status": "gruen", "text": "11/2026 (noch 20 Tage)"}
+    assert fp.tuev_faelligkeit("2026-10", HEUTE) == {"status": "gelb", "text": "10/2026 (fällig, überfällig ab 01.01.2027)"}
+    assert fp.tuev_faelligkeit("2026-08", HEUTE)["status"] == "gelb"
+    assert fp.tuev_faelligkeit("2026-07", HEUTE) == {"status": "rot", "text": "07/2026 (überfällig seit 01.10.2026)"}
 
 
 def test_wartungsplan_aus_fahrzeugbuch(conn):
-    fahrzeug_id = _fahrzeug(conn, tuev_faellig="2026-09")
+    fahrzeug_id = _fahrzeug(conn, tuev_faellig="2026-06")
     assert fp.save_aufgabe(conn, fahrzeug_id, None, "Ölwechsel", 500.0, None) is None
     assert fp.save_aufgabe(conn, fahrzeug_id, None, "Inspektion", None, 24) is None
     _eintrag(conn, fahrzeug_id, "2026-07-01", "Ölwechsel", zaehlerstand=3077.0)

@@ -222,6 +222,9 @@ def delete_eintrag(conn: sqlite3.Connection, eintrag_id: int) -> None:
 # Gelb, sobald weniger als 10 % des Zählerintervalls oder weniger als 30 Tage übrig sind.
 BALD_ANTEIL = 0.1
 BALD_TAGE = 30
+# Nach Wunsch des Betreibers: Der TÜV ist im Monat der Plakette gelb und wird
+# erst so viele Monate nach dessen Beginn rot.
+TUEV_KULANZ_MONATE = 3
 # Dringendstes zuerst; grau (nie erledigt, Stand fehlt) braucht eher Aufmerksamkeit als grün.
 DRINGLICHKEIT = {"rot": 0, "gelb": 1, "grau": 2, "gruen": 3}
 
@@ -350,10 +353,14 @@ def faelligkeit(
 
 
 def tuev_faelligkeit(tuev_faellig: str, heute: date) -> dict:
-    """Die Plakette gilt bis zum Ende ihres Monats."""
-    jahr, monat = int(tuev_faellig[:4]), int(tuev_faellig[5:7])
-    rest_tage = (date(jahr, monat, calendar.monthrange(jahr, monat)[1]) - heute).days
-    return {"status": _ampel(rest_tage, BALD_TAGE), "text": f"{monat:02d}/{jahr} ({_rest_text(rest_tage, 'Tage')})"}
+    """Grün bis zum Monat der Plakette, dann gelb, rot erst nach der Kulanzzeit."""
+    monat = date(int(tuev_faellig[:4]), int(tuev_faellig[5:7]), 1)
+    ueberfaellig_ab = _plus_monate(monat, TUEV_KULANZ_MONATE)
+    if heute < monat:
+        return {"status": "gruen", "text": f"{monat:%m/%Y} ({_rest_text((monat - heute).days, 'Tage')})"}
+    if heute < ueberfaellig_ab:
+        return {"status": "gelb", "text": f"{monat:%m/%Y} (fällig, überfällig ab {ueberfaellig_ab:%d.%m.%Y})"}
+    return {"status": "rot", "text": f"{monat:%m/%Y} (überfällig seit {ueberfaellig_ab:%d.%m.%Y})"}
 
 
 def wartungsplan(conn: sqlite3.Connection, fahrzeug: sqlite3.Row, heute: date) -> list[dict]:
