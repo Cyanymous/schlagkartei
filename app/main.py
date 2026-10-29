@@ -177,6 +177,21 @@ def _statisch(name: str) -> str:
 
 
 templates.env.globals["statisch"] = _statisch
+
+# Schreibt der Dockerfile beim Bauen; ohne Docker (z. B. in den Tests) fehlt sie.
+_VERSION_DATEI = Path(__file__).parent.parent / "VERSION"
+templates.env.globals["version"] = _VERSION_DATEI.read_text().strip() if _VERSION_DATEI.exists() else "unbekannt"
+
+
+def _letzte_aenderung() -> str:
+    """Änderungszeit der Datenbankdatei: SQLite schreibt sie nur, wenn sich Daten ändern."""
+    pfad = Path(config.db_path())
+    if not pfad.exists():
+        return "–"
+    return datetime.fromtimestamp(pfad.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
+
+
+templates.env.globals["letzte_aenderung"] = _letzte_aenderung
 templates.env.filters["ortszeit"] = _ortszeit
 templates.env.filters["datum_de"] = _datum_de
 

@@ -30,6 +30,10 @@
       <span class="nav-gruppe">Daten</span>
       {{ punkt("/import", "Import", pfad.startswith("/import")) }}
     </nav>
+    <div class="seitenleiste-fuss">
+      <span>Version {{ version }}</span>
+      <span>Daten geändert {{ letzte_aenderung() }}</span>
+    </div>
   </aside>
   <main>
     {% set meldung = fehler or request.query_params.get("fehler") %}

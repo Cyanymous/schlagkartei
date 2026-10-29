@@ -141,3 +141,9 @@ def test_eigene_dateien_mit_pruefsumme_gegen_alten_zwischenspeicher(client):
     seite = client.get("/").text
     assert re.search(r'href="/static/style\.css\?v=[0-9a-f]{10}"', seite)
     assert re.search(r'src="/static/app\.js\?v=[0-9a-f]{10}"', seite)
+
+
+def test_seitenleiste_zeigt_version_und_datenstand(client):
+    seite = client.get("/").text
+    assert "Version unbekannt" in seite  # VERSION schreibt erst der Docker-Build
+    assert re.search(r"Daten geändert \d{2}\.\d{2}\.\d{4} \d{2}:\d{2}", seite)
